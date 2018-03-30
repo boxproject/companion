@@ -1,0 +1,29 @@
+{
+  "pri_eth": {
+    "creator":"0x692673d8b7337cd48bbe11088cc2b47b586cecd0",
+    "creator_passphrase": "123456",
+    "creator_keystore_path": "/Users/john/workspace/ethprv/chain/keystore/UTC--2018-03-19T09-33-10.740268000Z--692673d8b7337cd48bbe11088cc2b47b586cecd0",
+    "cashier_setter": "0x87a53d783fdd68cb1043282b9f3adfec4f4a8c74",
+
+    "geth_api": "ws://127.0.0.1:8546",
+    "check_block_before": 0,
+    "cursor_file_path":"/Users/john/cursor.txt",
+    "scan_interval": 5,
+    "gas_limit":10000000,
+    "gas_price":2,
+    "wallet_gas": 291654,
+    "factory_gas": 513617
+  },
+  "level_db_path":"/Users/john/leveldb2",
+  "sink_address":"0x2AeE93A5D2046d3bEEA3dB9e891A8cb970A385E3",
+  "server_cert":"/Users/john/ssl/server.pem",
+  "server_key":"/Users/john/ssl/server.key",
+  "client_cert":"/Users/john/ssl/client.pem",
+  "client_key":"/Users/john/ssl/client.key",
+  "grpc_ser_host":"127.0.0.1:50502",
+  "grpc_ser_port":":50502",
+  "account_url":"http://192.168.199.183:5002/box/v1/capital/account/add",
+  "deposit_url":"http://192.168.199.183:5002/box/v1/capital/deposit",
+  "withdraw_url":"http://192.168.199.183:5002/box/v1/capital/withdraw",
+  "withdraw_tx_url":"http://192.168.199.183:5002/box/v1/capital/withdraw/id"
+}
