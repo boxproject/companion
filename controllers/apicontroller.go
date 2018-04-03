@@ -2,14 +2,12 @@ package controllers
 
 import (
 	"strings"
-	"encoding/json"
 
+	logger "github.com/alecthomas/log4go"
 	"github.com/boxproject/companion/comm"
 	"github.com/boxproject/companion/handler"
 	"github.com/boxproject/companion/util"
-	logger "github.com/alecthomas/log4go"
 	"github.com/ethereum/go-ethereum/common"
-	"math/big"
 )
 
 type HashController struct {
@@ -153,7 +151,7 @@ func (a *ApplyController) approve() {
 		a.retErrJSON(hash, wdHash, comm.Err_UNENABLE_CATEGORY)
 		return
 	}
-	logger.Debug("ApplyController.approve:---","hash:",hash," wdhash:",wdHash," recAddress:",recAddress," amount:",amount," fee:",fee," category:",category)
+	logger.Debug("ApplyController.approve:---", "hash:", hash, " wdhash:", wdHash, " recAddress:", recAddress, " amount:", amount, " fee:", fee, " category:", category)
 
 	a.Data["json"] = &ApplyModel{RspNo: comm.Err_OK, Hash: hash, WdHash: wdHash}
 	comm.ReqChan <- &comm.RequestModel{Hash: hash, ReqType: comm.REQ_OUT_APPROVE, WdHash: wdHash, RecAddress: recAddress, Amount: amount, Fee: fee, Category: category}
@@ -175,58 +173,9 @@ func (a *ApplyController) txExists() {
 	a.ServeJSON()
 }
 
-//account
-type AccountController struct {
-	baseController
-}
 
 //account used
 type AccountModel struct {
 	RspNo   string //0-成功 其他-失败
 	RspDesc string //说明
-}
-
-//err json pkg
-func (a *AccountController) retErrJSON(errNo string) {
-	a.Data["json"] = &AccountModel{RspNo: errNo}
-	a.ServeJSON()
-}
-
-func (a *AccountController) AccountUse() {
-	accountStr := a.GetString("account")
-	logger.Debug("AccountUse account: %s", accountStr)
-	//if !strings.HasPrefix(accountStr, comm.HASH_PRIFIX) {
-	//	a.retErrJSON(comm.Err_UNENABLE_PREFIX)
-	//	return
-	//}
-	category, err := a.GetInt64("category")
-	if err != nil {
-		logger.Debug("category[%d] illegal", category)
-		a.retErrJSON( comm.Err_UNENABLE_AMOUNT)
-		return
-	} else if !util.CheckCategory(category) {
-		a.retErrJSON(comm.Err_UNENABLE_CATEGORY)
-		return
-	}
-
-	grpcStream := &comm.GrpcStream{Type: comm.GRPC_ACCOUNT_USE, Account: accountStr,Category:big.NewInt(category)}
-	if grpcStreamJson, err := json.Marshal(grpcStream); err != nil {
-		logger.Error("EventStream marshal failed. cause:%v", err)
-	} else {
-		//write to db
-		if comm.Ldb != nil {
-			comm.Ldb.DelKey([]byte(comm.GRPC_DB_PREFIX + "0_" + grpcStream.Type + "_" + grpcStream.Account))
-			comm.Ldb.DelKey([]byte(comm.GRPC_DB_PREFIX + "1_" + grpcStream.Type + "_" + grpcStream.Account))
-			if err := comm.Ldb.PutByte([]byte(comm.GRPC_DB_PREFIX + "0_" + grpcStream.Type + "_" + grpcStream.Account),grpcStreamJson); err != nil {
-				logger.Error("landtodb error", err)
-			}
-			//logger.Debug("db put value:", string(grpcStreamJson))
-		}else {
-			logger.Error("ldb is nil")
-		}
-	}
-
-	comm.GrpcStreamChan <- grpcStream
-	a.Data["json"] = &AccountModel{RspNo: comm.Err_OK}
-	a.ServeJSON()
 }

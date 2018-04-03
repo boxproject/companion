@@ -14,6 +14,11 @@
     "wallet_gas": 291654,
     "factory_gas": 513617
   },
+  "router_info":{
+    "ser_voucher":"voucher",
+    "ser_companion":"companion",
+    "companion_name":"comp-001"
+  },
   "level_db_path":"/Users/john/leveldb2",
   "sink_address":"0x2AeE93A5D2046d3bEEA3dB9e891A8cb970A385E3",
   "server_cert":"/Users/john/ssl/server.pem",

@@ -7,16 +7,15 @@ import (
 
 	"github.com/ethereum/go-ethereum/rpc"
 
+	logger "github.com/alecthomas/log4go"
+	"github.com/astaxie/beego"
 	"github.com/boxproject/companion/comm"
 	"github.com/boxproject/companion/config"
 	"github.com/boxproject/companion/controllers"
 	"github.com/boxproject/companion/db"
 	"github.com/boxproject/companion/grpcserver"
 	"github.com/boxproject/companion/handler"
-	"github.com/boxproject/companion/httpcli"
 	"github.com/boxproject/companion/watcher"
-	logger "github.com/alecthomas/log4go"
-	"github.com/astaxie/beego"
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -61,9 +60,9 @@ func StartCmd(c *cli.Context) error {
 	//提供http服务
 	//go httpServer()
 
-	//上报程序
-	repCli := httpcli.NewRepCli(cfg)
-	repCli.Start()
+	////上报程序
+	//repCli := httpcli.NewRepCli(cfg)
+	//repCli.Start()
 
 	signalCh := make(chan os.Signal)
 	signal.Notify(signalCh,
@@ -74,7 +73,7 @@ func StartCmd(c *cli.Context) error {
 
 	asyEthHandler.Close()
 	priLogWatcher.Stop()
-	repCli.Stop()
+	//repCli.Stop()
 
 	logger.Info("companion has already been shutdown...")
 	return nil
@@ -118,14 +117,13 @@ func initDb(path string) (*db.Ldb, error) {
 
 //init grpc
 func initGrpcSer(cfg *config.Config, watcher *watcher.EthEventLogWatcher) error {
-	return grpcserver.InitConn(cfg,watcher)
+	return grpcserver.InitConn(cfg, watcher)
 }
 
 //http
 func httpServer() {
 	beego.Router(ServiceName_HASH, &controllers.HashController{}, "get,post:Hash")
 	beego.Router(ServiceName_APPLY, &controllers.ApplyController{}, "get,post:Apply")
-	beego.Router(ServiceName_ACCOUNT, &controllers.AccountController{}, "get,post:AccountUse")
 
 	beego.Run()
 }

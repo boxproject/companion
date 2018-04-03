@@ -55,12 +55,12 @@ func addHashHandler(logW *EthEventLogWatcher, log *types.Log) error {
 			if contentByte, err := logW.ldb.GetByte([]byte(comm.HASH_ADD_CONTENT_PREFIX + hash.Hex())); err != nil {
 				logger.Error("load content err:%v", err)
 			} else {
-				grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_SIGN_ADD, Hash: hash, Content: string(contentByte), Status: comm.HASH_STATUS_APPLY, CreateTime: time.Now()}
+				grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_HASH_ADD_LOG, Hash: hash, Content: string(contentByte), Status: comm.HASH_STATUS_APPLY, CreateTime: time.Now()}
 				if grpcStreamJson, err := json.Marshal(grpcStream); err != nil {
 					logger.Error("EventStream marshal failed. cause:%v", err)
 				} else {
 					//write to db
-					if err := logW.SetGrpcStreamDB(false, grpcStream.Type, hash.Hex(),grpcStreamJson); err != nil {
+					if err := logW.SetGrpcStreamDB(false, grpcStream.Type, hash.Hex(), grpcStreamJson); err != nil {
 						logger.Error("landtodb error", err)
 					}
 				}
@@ -82,12 +82,12 @@ func enableHashHandler(logW *EthEventLogWatcher, log *types.Log) error {
 			if contentByte, err := logW.ldb.GetByte([]byte(comm.HASH_ADD_CONTENT_PREFIX + hash.Hex())); err != nil {
 				logger.Error("load content err:%v", err)
 			} else {
-				grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_SIGN_ENABLE, Hash: hash, Content: string(contentByte), Status: comm.HASH_STATUS_ENABLE, CreateTime: time.Now()}
+				grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_HASH_ENABLE_LOG, Hash: hash, Content: string(contentByte), Status: comm.HASH_STATUS_ENABLE, CreateTime: time.Now()}
 				if grpcStreamJson, err := json.Marshal(grpcStream); err != nil {
 					logger.Error("EventStream marshal failed. cause:%v", err)
 				} else {
 					//write to db
-					if err := logW.SetGrpcStreamDB(false, grpcStream.Type, hash.Hex(),grpcStreamJson); err != nil {
+					if err := logW.SetGrpcStreamDB(false, grpcStream.Type, hash.Hex(), grpcStreamJson); err != nil {
 						logger.Error("landtodb error", err)
 					}
 				}
@@ -110,12 +110,12 @@ func disableHashHandler(logW *EthEventLogWatcher, log *types.Log) error {
 			if contentByte, err := logW.ldb.GetByte([]byte(comm.HASH_ADD_CONTENT_PREFIX + hash.Hex())); err != nil {
 				logger.Error("load content err:%v", err)
 			} else {
-				grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_SIGN_DISABLE, Hash: hash, Content: string(contentByte), Status: comm.HASH_STATUS_DISABLE, CreateTime: time.Now()}
+				grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_HASH_DISABLE_LOG, Hash: hash, Content: string(contentByte), Status: comm.HASH_STATUS_DISABLE, CreateTime: time.Now()}
 				if grpcStreamJson, err := json.Marshal(grpcStream); err != nil {
 					logger.Error("EventStream marshal failed. cause:%v", err)
 				} else {
 					//write to db
-					if err := logW.SetGrpcStreamDB(false, grpcStream.Type, hash.Hex(),grpcStreamJson); err != nil {
+					if err := logW.SetGrpcStreamDB(false, grpcStream.Type, hash.Hex(), grpcStreamJson); err != nil {
 						logger.Error("landtodb error", err)
 					}
 				}
@@ -141,21 +141,21 @@ func withdrawApplyHandler(logW *EthEventLogWatcher, log *types.Log) error {
 			//获取db中的地址数据
 			if recAddrByte, err := logW.ldb.GetByte([]byte(comm.APPROVE_RECADDR_PREFIX + hash.Hex())); err != nil {
 				logger.Error("load recAddress err:%v", err)
-			}else {
+			} else {
 				to = string(recAddrByte)
 			}
-		}else {
+		} else {
 			to = common.BytesToAddress(dataBytes[64:96]).Hex()
 		}
 		logger.Debug("withdrawAplyHandler......db....")
 		lastConfirmed := common.BytesToAddress(dataBytes[128:160])
 		if util.AddressEquals(lastConfirmed, common.HexToAddress(logW.appCfg.Creator)) { //最终确认人
-			grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_APPROVE, Hash: hash, WdHash: wdHash, Amount: amount, Fee: fee, To: to, Category: category, CreateTime: time.Now()}
+			grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_WITHDRAW_LOG, Hash: hash, WdHash: wdHash, Amount: amount, Fee: fee, To: to, Category: category, CreateTime: time.Now()}
 			if grpcStreamJson, err := json.Marshal(grpcStream); err != nil {
 				logger.Error("EventStream marshal failed. cause:%v", err)
 			} else {
 				//write to db
-				if err := logW.SetGrpcStreamDB(false, grpcStream.Type, wdHash.Hex(),grpcStreamJson); err != nil {
+				if err := logW.SetGrpcStreamDB(false, grpcStream.Type, wdHash.Hex(), grpcStreamJson); err != nil {
 					logger.Error("landtodb error", err)
 				}
 			}

@@ -25,7 +25,7 @@ type PriAsyEthHandler struct {
 }
 
 func NewPriAsyEthHandler(cfg *config.Config, db *db.Ldb) *PriAsyEthHandler {
-	return &PriAsyEthHandler{ethCfg: cfg.PriEthCfg, sinkAddress: common.HexToAddress(cfg.SinkAddress), ldb: db}
+	return &PriAsyEthHandler{ethCfg: cfg.PriEthCfg, sinkAddress: common.HexToAddress(cfg.SinkAddress), ldb: db,quitChannel:make(chan int,1)}
 }
 
 //上私链操作

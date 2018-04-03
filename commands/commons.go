@@ -16,15 +16,14 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/boxproject/companion/config"
 	"github.com/AlecAivazis/survey"
 	logger "github.com/alecthomas/log4go"
+	"github.com/boxproject/companion/config"
 )
 
 const (
-	ServiceName_HASH  = "/companion/hash"  //上链
-	ServiceName_APPLY = "/companion/apply" //提现
-	ServiceName_ACCOUNT = "/companion/account" //账号使用
+	ServiceName_HASH    = "/companion/hash"    //上链
+	ServiceName_APPLY   = "/companion/apply"   //提现
 )
 
 var (

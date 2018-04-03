@@ -2,20 +2,20 @@ package watcher
 
 import (
 	"context"
-	"math/big"
 	"encoding/json"
+	"math/big"
 
+	logger "github.com/alecthomas/log4go"
+	"github.com/boxproject/companion/comm"
 	"github.com/boxproject/companion/config"
 	"github.com/boxproject/companion/db"
-	"github.com/boxproject/companion/comm"
-	logger "github.com/alecthomas/log4go"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
-	"time"
 	"strings"
+	"time"
 )
 
 type EthEventLogWatcher struct {
@@ -157,7 +157,7 @@ func (logW *EthEventLogWatcher) checkLogs(blkNumber *big.Int) error {
 			FromBlock: checkPoint,
 			ToBlock:   blkNumber,
 		}); err != nil {
-			logger.Debug("FilterLogs :%s",err)
+		logger.Debug("FilterLogs :%s", err)
 		return err
 	} else {
 		if len(logs) == 0 {
@@ -218,70 +218,66 @@ func (logW *EthEventLogWatcher) CheckLogs(blkNumber *big.Int) error {
 	return nil
 }
 
-func (logW *EthEventLogWatcher)SetGrpcStreamDB(isSendOK bool, infoType string, keyIndex string, value []byte) error {
+func (logW *EthEventLogWatcher) SetGrpcStreamDB(isSendOK bool, infoType string, keyIndex string, value []byte) error {
 	//删除原有数据
 	var keysDelFlag string
 	var keysSetFlag string
 	if isSendOK {
 		keysDelFlag = "0_"
 		keysSetFlag = "1_"
-	}else {
+	} else {
 		keysDelFlag = "1_"
 		keysSetFlag = "0_"
 	}
 
 	//logW.ldb.DelKey()
 	switch infoType {
-	case comm.GRPC_ACCOUNT_USE,
-	     comm.GRPC_SIGN_ADD,
-	     comm.GRPC_SIGN_ENABLE,
-	     comm.GRPC_SIGN_DISABLE,
-	     comm.GRPC_APPROVE:
-	     	//logger.Debug("isSendOK:",isSendOK," infoType:",infoType, " keyIndex:",keyIndex," value:",string(value))
-			//先删除数据
-			logW.DelKey([]byte(comm.GRPC_DB_PREFIX + keysDelFlag +infoType + "_" +  keyIndex))
-			logW.DelKey([]byte(comm.GRPC_DB_PREFIX + keysSetFlag +infoType + "_" +  keyIndex))
-			//重新写入数据
-			if err := logW.PutByte([]byte(comm.GRPC_DB_PREFIX + keysSetFlag + infoType  + "_" + keyIndex),value); err != nil {
-				logger.Error("landtodb error", err)
-			}
+	case comm.GRPC_HASH_ADD_LOG,
+		comm.GRPC_HASH_ENABLE_LOG,
+		comm.GRPC_HASH_DISABLE_LOG,
+		comm.GRPC_WITHDRAW_LOG:
+		//logger.Debug("isSendOK:",isSendOK," infoType:",infoType, " keyIndex:",keyIndex," value:",string(value))
+		//先删除数据
+		logW.DelKey([]byte(comm.GRPC_DB_PREFIX + keysDelFlag + infoType + "_" + keyIndex))
+		logW.DelKey([]byte(comm.GRPC_DB_PREFIX + keysSetFlag + infoType + "_" + keyIndex))
+		//重新写入数据
+		if err := logW.PutByte([]byte(comm.GRPC_DB_PREFIX+keysSetFlag+infoType+"_"+keyIndex), value); err != nil {
+			logger.Error("landtodb error", err)
+		}
 	default:
-		logger.Info("no grpc type :",infoType)
+		logger.Info("no grpc type :", infoType)
 	}
 
 	return nil
 }
 
 //GRPC重发检测
-func (logW *EthEventLogWatcher)ReSendGrpcStream() error {
+func (logW *EthEventLogWatcher) ReSendGrpcStream() error {
 	//logger.Debug("ReSendGrpcStream....")
-	if mapHashAdd,err := logW.ldb.GetPrifix([]byte(comm.GRPC_DB_PREFIX+"0_"));err !=nil{
-		logger.Error("get db error:",err)
-	}else {
-		for i,value := range mapHashAdd  {
+	if mapHashAdd, err := logW.ldb.GetPrifix([]byte(comm.GRPC_DB_PREFIX + "0_")); err != nil {
+		logger.Error("get db error:", err)
+	} else {
+		for i, value := range mapHashAdd {
 			//logger.Debug("key:",i,"value:",value)
-			index := strings.Split(i,"_")[:]
+			index := strings.Split(i, "_")[:]
 			switch index[2] {
-				case comm.GRPC_ACCOUNT_USE,
-					 comm.GRPC_SIGN_ADD,
-					 comm.GRPC_SIGN_ENABLE,
-					 comm.GRPC_SIGN_DISABLE,
-					 comm.GRPC_APPROVE:
-					grpcStream := &comm.GrpcStream{}
-					if err := json.Unmarshal([]byte(value), grpcStream); err != nil {
-						logger.Error("db unmarshal err: %v", err)
-					} else {
-						//update time
-						if index[2] != comm.GRPC_ACCOUNT_USE {
-							grpcStream.CreateTime = time.Now()
-						}
-						comm.GrpcStreamChan <- grpcStream
-						//logger.Debug("resend....",grpcStream)
-						logger.Debug("grpc resend, type value:",grpcStream.Type)
-					}
-					break
-				default:
-					logger.Info("no grpc type..",index[2])
+			case comm.GRPC_HASH_ADD_LOG,
+				comm.GRPC_HASH_ENABLE_LOG,
+				comm.GRPC_HASH_DISABLE_LOG,
+				comm.GRPC_WITHDRAW_LOG:
+				grpcStream := &comm.GrpcStream{}
+				if err := json.Unmarshal([]byte(value), grpcStream); err != nil {
+					logger.Error("db unmarshal err: %v", err)
+				} else {
+					//update time
+					grpcStream.CreateTime = time.Now()
+					comm.GrpcStreamChan <- grpcStream
+					//logger.Debug("resend....",grpcStream)
+					logger.Debug("grpc resend, type value:", grpcStream.Type)
+				}
+				break
+			default:
+				logger.Info("no grpc type..", index[2])
 			}
 		}
 	}
@@ -289,9 +285,9 @@ func (logW *EthEventLogWatcher)ReSendGrpcStream() error {
 	return nil
 }
 
-func (logW *EthEventLogWatcher)PutByte(key, value []byte) error{
-	return logW.ldb.PutByte(key,value)
+func (logW *EthEventLogWatcher) PutByte(key, value []byte) error {
+	return logW.ldb.PutByte(key, value)
 }
-func (logW *EthEventLogWatcher)DelKey(key []byte) error{
+func (logW *EthEventLogWatcher) DelKey(key []byte) error {
 	return logW.ldb.DelKey(key)
 }

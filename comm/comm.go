@@ -78,22 +78,30 @@ const (
 	CATEGORY_BOX int64 = 2
 )
 
-//grpc流类型
+//grpc接口
 const (
-	GRPC_SIGN_ADD     = "1"	//新加hash
-	GRPC_SIGN_ENABLE  = "2"	//同意
-	GRPC_SIGN_DISABLE = "3"	//禁用
-	GRPC_ACCOUNT_USE  = "4"	//账户使用
-	GRPC_DEPOSIT  	   = "5"	//充值上报
-	GRPC_APPROVE      = "6"	//提现
-	GRPC_WITHDRAW  	   = "7"	//提现上报
-	GRPC_WITHDRAW_TX  = "8"	//提现tx上报
+	//GRPC_HASH_ADD_REQ     = "1"  //hash add申请 web
+	GRPC_HASH_ADD_LOG     = "2"  //hans add 私链log
+	GRPC_HASH_ENABLE_REQ  = "3"  //hash enable 申请
+	GRPC_HASH_ENABLE_LOG  = "4"  //hash enable 私链log
+	GRPC_HASH_DISABLE_REQ = "5"  //hash disable 申请
+	GRPC_HASH_DISABLE_LOG = "6"  //hash disable 私链log
+	GRPC_WITHDRAW_REQ     = "7"  //提现 申请
+	GRPC_WITHDRAW_LOG     = "8"  //提现 私链log
+	//GRPC_DEPOSIT_WEB      = "9"  //充值上报
+	//GRPC_WITHDRAW_TX_WEB  = "10" //提现tx上报
+	//GRPC_WITHDRAW_WEB     = "11" //	提现结果上报
+	//GRPC_VOUCHER_OPR_REQ  = "12" //	签名机操作处理
+	//GRPC_HASH_LIST_REQ    = "13" //	审批流查询
+	//GRPC_HASH_LIST_WEB    = "14" //	审批流上报
 )
+
 const (
 	//grpc_0_TYPE_hash 发送失败
 	//grpc_1_TYPE_hash 发送成功
 	GRPC_DB_PREFIX = "grpc_"
 )
+
 //上报类型
 const (
 	REQ_ACCOUNT_ADD = "1" //账户上报
@@ -146,6 +154,10 @@ type VReq struct {
 type VRsp struct {
 	Code    int
 	Message string
+}
+
+type GrpcStreamModel struct {
+	Msg []byte
 }
 
 //request chan

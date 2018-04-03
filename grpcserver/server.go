@@ -20,68 +20,15 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"math/big"
 )
+
 //
 type replyServer struct {
-	conn *grpc.ClientConn
-	watcher *watcher.EthEventLogWatcher
+	routerInfo config.RouterInfo
+	conn       *grpc.ClientConn
+	watcher    *watcher.EthEventLogWatcher
 }
-//
-//func (s *replyServer) Heart(ctx context.Context, req *pb.HeartRequest) (*pb.HeartResponse, error) {
-//	log.Debug("Heart.....hash:", req)
-//	response := &pb.HeartResponse{}
-//	return response, nil
-//}
-//
-//func (s *replyServer) Router(ctx context.Context, req *pb.RouterRequest) (*pb.RouterResponse, error) {
-//	log.Debug("Router.....hash:", req)
-//	response := &pb.RouterResponse{}
-//	return response, nil
-//}
-////
-//////TODO blockNum
-//func (s *replyServer) Listen(stream pb.Synchronizer_ListenServer) error {
-//	defer log.Info("grpc server listen end ......")
-//	log.Info("grpc server listen start......")
-//
-//	listReq, err := stream.Recv()
-//	log.Debug("listReq: %s", listReq)
-//	quitCh := make(chan bool)
-//
-//	go func() { //监控连接情况
-//		_, err = stream.Recv()
-//		if err == io.EOF {
-//			log.Debug("err EOF...", err)
-//			quitCh <- false
-//		}
-//
-//		if err != nil {
-//			log.Error("[LISTEN ERR] %v\n", err)
-//			quitCh <- false
-//		}
-//	}()
-//
-//	for {
-//		select {
-//		case data, ok := <-comm.GrpcStreamChan:
-//			if ok {
-//				if msgJson, err := json.Marshal(data); err != nil {
-//					log.Error("json marshal error:%v", err)
-//				} else {
-//					log.Debug("grpc send...", data)
-//					stream.Send(&pb.StreamRsp{Msg: msgJson})
-//				}
-//			} else {
-//				log.Error("read from grpc channel failed")
-//			}
-//		case <-quitCh:
-//			{
-//				return nil
-//			}
-//		}
-//	}
-//	return nil
-//}
 
 func loadCredential(cfg *config.Config) (credentials.TransportCredentials, error) {
 	//加载证书
@@ -121,10 +68,9 @@ func InitConn(cfg *config.Config, watcher *watcher.EthEventLogWatcher) error {
 		log.Error("connect to the remote server failed. cause: %v", err)
 		return err
 	}
-	replyServer := &replyServer{conn:conn,watcher:watcher}
+	replyServer := &replyServer{conn: conn, watcher: watcher, routerInfo: cfg.RouterName}
 
 	go streamRecv(replyServer)
-	go heart(replyServer)
 	go router(replyServer)
 
 	return nil
@@ -144,7 +90,8 @@ func streamRecv(n *replyServer) {
 				log.Error("[STREAM ERR] %v\n", err)
 			} else {
 				waitc := make(chan struct{})
-				stream.Send(&pb.ListenReq{ServerName: "grpc", Name: "companion", Ip: util.GetCurrentIp()})
+				//注册服务
+				stream.Send(&pb.ListenReq{ServerName: n.routerInfo.SerCompanion, Name: n.routerInfo.CompanionName, Ip: util.GetCurrentIp()})
 				go func() {
 					for {
 						if resp, err := stream.Recv(); err != nil { //rec error
@@ -157,6 +104,8 @@ func streamRecv(n *replyServer) {
 						}
 					}
 				}()
+				//启动心跳检测
+				go heart(n)
 				<-waitc
 				if err = stream.CloseSend(); err != nil {
 					log.Error("%v.CloseAndRecv() got error %v, want %v", stream, err, nil)
@@ -173,20 +122,20 @@ func heart(n *replyServer) {
 	for {
 		select {
 		case <-timerHeart.C:
-			log.Info("try heart...%d", timeCount)
+			//log.Info("try heart...%d", timeCount)
 			client := pb.NewSynchronizerClient(n.conn)
-			if rsp, err := client.Heart(context.TODO(), &pb.HeartRequest{RouterType: "grpc", ServerName: "grpc", Name: "companion", Ip: util.GetCurrentIp()}); err != nil {
+			if _, err := client.Heart(context.TODO(), &pb.HeartRequest{RouterType: "grpc", ServerName: n.routerInfo.SerCompanion, Name: n.routerInfo.CompanionName, Ip: util.GetCurrentIp(), Msg: []byte("heart")}); err != nil {
 				log.Error("heart req failed %s\n", err)
 			} else {
-				log.Debug("heart response", rsp)
+				//log.Debug("heart response", rsp)
 			}
 			timeCount++
 		}
 	}
 }
 
-func router(n *replyServer){
-	timerTest := time.NewTicker(time.Second * 3)
+func router(n *replyServer) {
+	timerTest := time.NewTicker(time.Second * 10)
 	for {
 		select {
 		case data, ok := <-comm.GrpcStreamChan:
@@ -194,60 +143,54 @@ func router(n *replyServer){
 				if msgJson, err := json.Marshal(data); err != nil {
 					log.Error("json marshal error:%v", err)
 				} else {
-					log.Debug("grpc send...", data)
+					log.Debug("grpc send:\n", data)
 					//发送标志
 					var isSendOK bool = true
 					client := pb.NewSynchronizerClient(n.conn)
-					if rsp, err := client.Router(context.TODO(), &pb.RouterRequest{RouterType: "grpc", RouterName: "grpc", Msg: msgJson}); err != nil {
+					if _, err := client.Router(context.TODO(), &pb.RouterRequest{RouterType: "grpc", RouterName: n.routerInfo.SerCompanion, Msg: msgJson}); err != nil {
 						log.Error("heart req failed %s\n", err)
 						isSendOK = false
 					} else {
-						log.Debug("heart response", rsp)
+						//log.Debug("heart response", rsp)
 					}
 					//update grpc db
 					switch data.Type {
-					case comm.GRPC_ACCOUNT_USE:
-						//重新写入数据
-						if err := n.watcher.SetGrpcStreamDB(isSendOK,data.Type,data.Account,msgJson); err != nil {
-							log.Error("landtodb error", err)
-						}
-						break
-					case comm.GRPC_SIGN_ADD,
-						comm.GRPC_SIGN_ENABLE,
-						comm.GRPC_SIGN_DISABLE:
+					case comm.GRPC_HASH_ADD_LOG,
+						comm.GRPC_HASH_ENABLE_LOG,
+						comm.GRPC_HASH_DISABLE_LOG:
 						//重新写入数据
 						if err := n.watcher.SetGrpcStreamDB(isSendOK, data.Type, data.Hash.Hex(), msgJson); err != nil {
 							log.Error("landtodb error", err)
 						}
 						break
-					case comm.GRPC_APPROVE:
+					case comm.GRPC_WITHDRAW_LOG:
 						//重新写入数据
 						if err := n.watcher.SetGrpcStreamDB(isSendOK, data.Type, data.WdHash.Hex(), msgJson); err != nil {
 							log.Error("landtodb error", err)
 						}
 					default:
-						log.Info("no grpc type :",data.Type)
+						log.Info("no grpc type :", data.Type)
 					}
 				}
 			} else {
 				log.Error("read from grpc channel failed")
 			}
 		case <-timerTest.C:
-			data := &comm.GrpcStream{Type:"BTC",BlockNumber:12039402}
-			if msgJson, err := json.Marshal(data); err != nil {
-				log.Error("json marshal error:%v", err)
-			} else {
-				//log.Debug("grpc send...", data)
-
-				client := pb.NewSynchronizerClient(n.conn)
-				if rsp, err := client.Router(context.TODO(), &pb.RouterRequest{RouterType: "grpc", RouterName: "grpc", Msg: msgJson}); err != nil {
-					log.Error("Router req failed %s\n", err)
-				} else {
-					log.Debug("Router response", rsp)
-				}
-			}
+			routerTest(n)
 		}
 	}
+}
+
+var routerTestIndex int64  = 0
+func routerTest(n *replyServer){
+	streams:= []*comm.GrpcStream{
+		{Type: comm.GRPC_HASH_ADD_LOG, 	BlockNumber: 10000000,	Hash: common.StringToHash("GRPC_HASH_ADD_LOG"), 	Content: string("GRPC_HASH_ADD_LOG"), 		Status: comm.HASH_STATUS_APPLY, CreateTime: time.Now()},
+		{Type:comm.GRPC_HASH_ENABLE_LOG,	BlockNumber: 20000000, 	Hash: common.StringToHash("GRPC_HASH_ENABLE_LOG"), 	Content: string("GRPC_HASH_ENABLE_LOG"), 	Status: comm.HASH_STATUS_ENABLE, CreateTime: time.Now()},
+		{Type:comm.GRPC_HASH_DISABLE_LOG,	BlockNumber: 30000000, 	Hash: common.StringToHash("GRPC_HASH_DISABLE_LOG"),	Content: string("GRPC_HASH_DISABLE_LOG"), Status: comm.HASH_STATUS_DISABLE, CreateTime: time.Now()},
+		{Type:comm.GRPC_WITHDRAW_LOG,		BlockNumber: 30000000, 	Hash: common.StringToHash("GRPC_WITHDRAW_LOG"), 	WdHash: common.StringToHash("GRPC_WITHDRAW_LOG"), Amount: big.NewInt(11), Fee: big.NewInt(22), To: "to address", Category: big.NewInt(routerTestIndex%5), CreateTime: time.Now()},
+		}
+	comm.GrpcStreamChan <- streams[routerTestIndex%int64(len(streams))]
+	routerTestIndex++
 }
 
 //处理流
@@ -258,22 +201,23 @@ func handleStream(streamRsp *pb.StreamRsp) {
 		return
 	}
 	switch streamModel.Type {
-	case comm.GRPC_SIGN_ENABLE: //同意
+	case comm.GRPC_HASH_ENABLE_REQ: //同意
 		hash := streamModel.Hash.Hex()
 		if !common.HasHexPrefix(hash) || len(common.FromHex(hash)) != comm.HASH_ENABLE_LENGTH {
 			log.Error("allow err")
-		}else {
+		} else {
 			comm.ReqChan <- &comm.RequestModel{Hash: hash, ReqType: comm.REQ_HASH_ENABLE}
 		}
-	case comm.GRPC_SIGN_DISABLE: //禁用
+		break
+	case comm.GRPC_HASH_DISABLE_REQ: //禁用
 		hash := streamModel.Hash.Hex()
 		if !common.HasHexPrefix(hash) || len(common.FromHex(hash)) != comm.HASH_ENABLE_LENGTH {
 			log.Error("disallow err")
-		}else {
+		} else {
 			comm.ReqChan <- &comm.RequestModel{Hash: hash, ReqType: comm.REQ_HASH_DISABLE}
 		}
-
+		break
 	default:
-		log.Info("no type,streamModel:",streamModel)
+		log.Info("no type,streamModel:\n", streamModel)
 	}
 }
