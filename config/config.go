@@ -2,7 +2,7 @@ package config
 
 type Config struct {
 	PriEthCfg   EthCfg     `json:"pri_eth,omitempty"`
-	RouterName  RouterInfo `json:"router_name,omitempty"`
+	RouterInfo  RouterInfo `json:"router_info,omitempty"`
 	LevelDbPath string     `json:"level_db_path,omitempty"`
 	SinkAddress string     `json:"sink_address,omitempty"`
 	ServerCert  string     `json:"server_cert,omitempty"`

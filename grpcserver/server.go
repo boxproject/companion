@@ -28,6 +28,7 @@ type replyServer struct {
 	routerInfo config.RouterInfo
 	conn       *grpc.ClientConn
 	watcher    *watcher.EthEventLogWatcher
+	isRouther  bool
 }
 
 func loadCredential(cfg *config.Config) (credentials.TransportCredentials, error) {
@@ -58,6 +59,10 @@ func loadCredential(cfg *config.Config) (credentials.TransportCredentials, error
 
 func InitConn(cfg *config.Config, watcher *watcher.EthEventLogWatcher) error {
 	log.Debug("init rpc client ....")
+
+	//重新发送失败GRPC
+	watcher.ReSendGrpcStream()
+
 	cred, err := loadCredential(cfg)
 	if err != nil {
 		fmt.Printf("%v\n", err)
@@ -68,10 +73,9 @@ func InitConn(cfg *config.Config, watcher *watcher.EthEventLogWatcher) error {
 		log.Error("connect to the remote server failed. cause: %v", err)
 		return err
 	}
-	replyServer := &replyServer{conn: conn, watcher: watcher, routerInfo: cfg.RouterName}
+	replyServer := &replyServer{conn: conn, watcher: watcher, routerInfo: cfg.RouterInfo}
 
 	go streamRecv(replyServer)
-	go router(replyServer)
 
 	return nil
 }
@@ -106,7 +110,10 @@ func streamRecv(n *replyServer) {
 				}()
 				//启动心跳检测
 				go heart(n)
+				//路由发送
+				go router(n)
 				<-waitc
+				n.isRouther = false
 				if err = stream.CloseSend(); err != nil {
 					log.Error("%v.CloseAndRecv() got error %v, want %v", stream, err, nil)
 				}
@@ -129,6 +136,7 @@ func heart(n *replyServer) {
 			} else {
 				//log.Debug("heart response", rsp)
 			}
+
 			timeCount++
 		}
 	}
@@ -136,7 +144,8 @@ func heart(n *replyServer) {
 
 func router(n *replyServer) {
 	timerTest := time.NewTicker(time.Second * 10)
-	for {
+	n.isRouther = true
+	for n.isRouther{
 		select {
 		case data, ok := <-comm.GrpcStreamChan:
 			if ok {
@@ -176,7 +185,7 @@ func router(n *replyServer) {
 				log.Error("read from grpc channel failed")
 			}
 		case <-timerTest.C:
-			routerTest(n)
+			//routerTest(n)
 		}
 	}
 }
