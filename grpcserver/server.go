@@ -20,7 +20,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"math/big"
 )
 
 //
@@ -82,45 +81,43 @@ func InitConn(cfg *config.Config, watcher *watcher.EthEventLogWatcher) error {
 
 //stream recv
 func streamRecv(n *replyServer) {
-	timerListen := time.NewTicker(time.Second * 5)
 	timeCount := 1
 	for {
-		select {
-		case <-timerListen.C:
-			log.Info("try reveive...%d", timeCount)
-			client := pb.NewSynchronizerClient(n.conn)
-			stream, err := client.Listen(context.TODO())
-			if err != nil {
-				log.Error("[STREAM ERR] %v\n", err)
-			} else {
-				waitc := make(chan struct{})
-				//注册服务
-				stream.Send(&pb.ListenReq{ServerName: n.routerInfo.SerCompanion, Name: n.routerInfo.CompanionName, Ip: util.GetCurrentIp()})
-				go func() {
-					for {
-						if resp, err := stream.Recv(); err != nil { //rec error
-							log.Error("[STREAM ERR] %v\n", err)
-							close(waitc)
-							return
-						} else {
-							//log.Debug("stream Recv: %s\n", resp)
-							handleStream(resp)
-						}
+		log.Info("try reveive...%d", timeCount)
+		client := pb.NewSynchronizerClient(n.conn)
+		stream, err := client.Listen(context.TODO())
+		if err != nil {
+			log.Error("[STREAM ERR] %v\n", err)
+		} else {
+			waitc := make(chan struct{})
+			//注册服务
+			stream.Send(&pb.ListenReq{ServerName: n.routerInfo.SerCompanion, Name: n.routerInfo.CompanionName, Ip: util.GetCurrentIp()})
+			go func() {
+				for {
+					if resp, err := stream.Recv(); err != nil { //rec error
+						log.Error("[STREAM ERR] %v\n", err)
+						close(waitc)
+						return
+					} else {
+						//log.Debug("stream Recv: %s\n", resp)
+						handleStream(resp)
 					}
-				}()
-				//启动心跳检测
-				go heart(n)
-				//路由发送
-				go router(n)
-				<-waitc
-				n.isRouther = false
-				if err = stream.CloseSend(); err != nil {
-					log.Error("%v.CloseAndRecv() got error %v, want %v", stream, err, nil)
 				}
+			}()
+			//启动心跳检测
+			go heart(n)
+			//路由发送
+			go router(n)
+			<-waitc
+			n.isRouther = false
+			if err = stream.CloseSend(); err != nil {
+				log.Error("%v.CloseAndRecv() got error %v, want %v", stream, err, nil)
 			}
-			timeCount++
 		}
+		timeCount++
+		time.Sleep(time.Second*5)
 	}
+	log.Info("end streamRecv")
 }
 
 func heart(n *replyServer) {
@@ -143,7 +140,6 @@ func heart(n *replyServer) {
 }
 
 func router(n *replyServer) {
-	timerTest := time.NewTicker(time.Second * 10)
 	n.isRouther = true
 	for n.isRouther{
 		select {
@@ -156,7 +152,7 @@ func router(n *replyServer) {
 					//发送标志
 					var isSendOK bool = true
 					client := pb.NewSynchronizerClient(n.conn)
-					if _, err := client.Router(context.TODO(), &pb.RouterRequest{RouterType: "grpc", RouterName: n.routerInfo.SerCompanion, Msg: msgJson}); err != nil {
+					if _, err := client.Router(context.TODO(), &pb.RouterRequest{RouterType: "grpc", RouterName: n.routerInfo.SerVoucher, Msg: msgJson}); err != nil {
 						log.Error("heart req failed %s\n", err)
 						isSendOK = false
 					} else {
@@ -184,22 +180,8 @@ func router(n *replyServer) {
 			} else {
 				log.Error("read from grpc channel failed")
 			}
-		case <-timerTest.C:
-			//routerTest(n)
 		}
 	}
-}
-
-var routerTestIndex int64  = 0
-func routerTest(n *replyServer){
-	streams:= []*comm.GrpcStream{
-		{Type: comm.GRPC_HASH_ADD_LOG, 	BlockNumber: 10000000,	Hash: common.StringToHash("GRPC_HASH_ADD_LOG"), 	Content: string("GRPC_HASH_ADD_LOG"), 		Status: comm.HASH_STATUS_APPLY, CreateTime: time.Now()},
-		{Type:comm.GRPC_HASH_ENABLE_LOG,	BlockNumber: 20000000, 	Hash: common.StringToHash("GRPC_HASH_ENABLE_LOG"), 	Content: string("GRPC_HASH_ENABLE_LOG"), 	Status: comm.HASH_STATUS_ENABLE, CreateTime: time.Now()},
-		{Type:comm.GRPC_HASH_DISABLE_LOG,	BlockNumber: 30000000, 	Hash: common.StringToHash("GRPC_HASH_DISABLE_LOG"),	Content: string("GRPC_HASH_DISABLE_LOG"), Status: comm.HASH_STATUS_DISABLE, CreateTime: time.Now()},
-		{Type:comm.GRPC_WITHDRAW_LOG,		BlockNumber: 30000000, 	Hash: common.StringToHash("GRPC_WITHDRAW_LOG"), 	WdHash: common.StringToHash("GRPC_WITHDRAW_LOG"), Amount: big.NewInt(11), Fee: big.NewInt(22), To: "to address", Category: big.NewInt(routerTestIndex%5), CreateTime: time.Now()},
-		}
-	comm.GrpcStreamChan <- streams[routerTestIndex%int64(len(streams))]
-	routerTestIndex++
 }
 
 //处理流

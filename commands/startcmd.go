@@ -58,7 +58,7 @@ func StartCmd(c *cli.Context) error {
 	asyEthHandler := handler.NewPriAsyEthHandler(cfg, db)
 	go asyEthHandler.Start()
 	//提供http服务
-	go httpServer()
+	//go httpServer()
 
 	////上报程序
 	//repCli := httpcli.NewRepCli(cfg)
