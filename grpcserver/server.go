@@ -152,7 +152,7 @@ func router(n *replyServer) {
 					//发送标志
 					var isSendOK bool = true
 					client := pb.NewSynchronizerClient(n.conn)
-					if _, err := client.Router(context.TODO(), &pb.RouterRequest{RouterType: "grpc", RouterName: n.routerInfo.SerVoucher, Msg: msgJson}); err != nil {
+					if _, err := client.Router(context.TODO(), &pb.RouterRequest{RouterType: "web", RouterName: n.routerInfo.SerVoucher, Msg: msgJson}); err != nil {
 						log.Error("heart req failed %s\n", err)
 						isSendOK = false
 					} else {
@@ -194,9 +194,9 @@ func handleStream(streamRsp *pb.StreamRsp) {
 	switch streamModel.Type {
 	case comm.GRPC_HASH_ADD_REQ: //hash add申请
 		hash := streamModel.Hash.Hex()
-		approver := streamModel.Approver //审批人
-		content := streamModel.Content   //内容
-		comm.ReqChan <- &comm.RequestModel{Hash: hash, ReqType: comm.REQ_HASH_ADD, Approver: approver, Content: content}
+		//approver := streamModel.Approver //审批人
+		//content := streamModel.Content   //内容
+		comm.ReqChan <- &comm.RequestModel{Hash: hash, ReqType: comm.REQ_HASH_ADD}
 		break
 	case comm.GRPC_HASH_ENABLE_REQ: //同意
 		hash := streamModel.Hash.Hex()

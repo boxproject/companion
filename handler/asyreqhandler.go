@@ -74,10 +74,10 @@ func (this *PriAsyEthHandler) Close() {
 func (this *PriAsyEthHandler) addHash(req *comm.RequestModel) error {
 	logger.Info("PriAsyEthHandler addHash....")
 
-	if err := this.ldb.PutStrWithPrifix(comm.HASH_ADD_CONTENT_PREFIX, req.Hash, req.Content); err != nil { //content 内容存入db，供私链申请同意后查询使用
-		logger.Error("land to db failed: %s", err)
-		return err
-	}
+	//if err := this.ldb.PutStrWithPrifix(comm.HASH_ADD_CONTENT_PREFIX, req.Hash, req.Content); err != nil { //content 内容存入db，供私链申请同意后查询使用
+	//	logger.Error("land to db failed: %s", err)
+	//	return err
+	//}
 
 	opts, err := this.createTransactor(this.ethCfg.CreatorKeystorePath, this.ethCfg.CreatorPassphrase)
 	if err != nil {

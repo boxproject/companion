@@ -7,9 +7,9 @@ import (
 
 	"encoding/json"
 
+	logger "github.com/alecthomas/log4go"
 	"github.com/boxproject/companion/comm"
 	"github.com/boxproject/companion/util"
-	logger "github.com/alecthomas/log4go"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -52,21 +52,21 @@ func addHashHandler(logW *EthEventLogWatcher, log *types.Log) error {
 		lastConfirmed := common.BytesToAddress(dataBytes[32:64])
 		logger.Debug("addHashHandler......db....", hash)
 		if util.AddressEquals(lastConfirmed, common.HexToAddress(logW.appCfg.Creator)) { //最终确认人
-			if contentByte, err := logW.ldb.GetByte([]byte(comm.HASH_ADD_CONTENT_PREFIX + hash.Hex())); err != nil {
-				logger.Error("load content err:%v", err)
+			//if contentByte, err := logW.ldb.GetByte([]byte(comm.HASH_ADD_CONTENT_PREFIX + hash.Hex())); err != nil {
+			//	logger.Error("load content err:%v", err)
+			//} else {
+			grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_HASH_ADD_LOG, Hash: hash, Status: comm.HASH_STATUS_APPLY}
+			if grpcStreamJson, err := json.Marshal(grpcStream); err != nil {
+				logger.Error("EventStream marshal failed. cause:%v", err)
 			} else {
-				grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_HASH_ADD_LOG, Hash: hash, Content: string(contentByte), Status: comm.HASH_STATUS_APPLY, CreateTime: time.Now()}
-				if grpcStreamJson, err := json.Marshal(grpcStream); err != nil {
-					logger.Error("EventStream marshal failed. cause:%v", err)
-				} else {
-					//write to db
-					if err := logW.SetGrpcStreamDB(false, grpcStream.Type, hash.Hex(), grpcStreamJson); err != nil {
-						logger.Error("landtodb error", err)
-					}
+				//write to db
+				if err := logW.SetGrpcStreamDB(false, grpcStream.Type, hash.Hex(), grpcStreamJson); err != nil {
+					logger.Error("landtodb error", err)
 				}
-				comm.GrpcStreamChan <- grpcStream
 			}
+			comm.GrpcStreamChan <- grpcStream
 		}
+		//}
 	}
 	return nil
 }

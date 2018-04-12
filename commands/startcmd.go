@@ -122,8 +122,8 @@ func initGrpcSer(cfg *config.Config, watcher *watcher.EthEventLogWatcher) error 
 
 //http
 func httpServer() {
-	beego.Router(ServiceName_HASH, &controllers.HashController{}, "get,post:Hash")
-	beego.Router(ServiceName_APPLY, &controllers.ApplyController{}, "get,post:Apply")
-
-	beego.Run()
+	//beego.Router(ServiceName_HASH, &controllers.HashController{}, "get,post:Hash")
+	//beego.Router(ServiceName_APPLY, &controllers.ApplyController{}, "get,post:Apply")
+	//
+	//beego.Run()
 }

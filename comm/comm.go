@@ -88,12 +88,16 @@ const (
 	GRPC_HASH_DISABLE_LOG = "6"  //hash disable 私链log
 	GRPC_WITHDRAW_REQ     = "7"  //提现 申请
 	GRPC_WITHDRAW_LOG     = "8"  //提现 私链log
-	//GRPC_DEPOSIT_WEB      = "9"  //充值上报
-	//GRPC_WITHDRAW_TX_WEB  = "10" //提现tx上报
-	//GRPC_WITHDRAW_WEB     = "11" //	提现结果上报
-	//GRPC_VOUCHER_OPR_REQ  = "12" //	签名机操作处理
-	//GRPC_HASH_LIST_REQ    = "13" //	审批流查询
-	//GRPC_HASH_LIST_WEB    = "14" //	审批流上报
+	GRPC_DEPOSIT_WEB      = "9"  //充值上报
+	GRPC_WITHDRAW_TX_WEB  = "10" //提现tx上报
+	GRPC_WITHDRAW_WEB     = "11" //提现结果上报
+	GRPC_VOUCHER_OPR_REQ  = "12" //签名机操作处理
+	//GRPC_HASH_LIST_REQ    = "13" //审批流查询
+	//GRPC_HASH_LIST_WEB    = "14" //审批流上报
+	GRPC_TOKEN_LIST_WEB   = "15" //token上报
+	GRPC_COIN_LIST_WEB    = "16" //coin上报
+	GRPC_HASH_ENABLE_WEB  = "17" //hash enable 公链log
+	GRPC_HASH_DISABLE_WEB = "18" //hash enable 公链log
 )
 
 const (
@@ -124,20 +128,56 @@ type RequestModel struct {
 }
 
 type GrpcStream struct {
-	Type        string
-	BlockNumber uint64 //区块号
-	Approver    string //审批人
-	Hash        common.Hash
-	WdHash      common.Hash
-	Amount      *big.Int
-	Fee         *big.Int
-	Account     string
-	To          string
-	Category    *big.Int
-	Content     string
-	Status      string
-	CreateTime  time.Time //创建时间
+	Type           string
+	BlockNumber    uint64 //区块号
+	AppId          string //申请人
+	Hash           common.Hash
+	WdHash         common.Hash
+	TxHash         string
+	Amount         *big.Int
+	Fee            *big.Int
+	Account        string
+	From           string
+	To             string
+	Category       *big.Int
+	Flow           string //原始内容
+	Sign           string //签名信息
+	Status         string
+	VoucherOperate *Operate
+	ApplyTime      time.Time //申请时间
+	TokenList      []*TokenInfo
+	SignInfos      []*SignInfo
 }
+
+//私钥-签名机操作
+type Operate struct {
+	Type         string
+	AppId        string //appid
+	AppName      string //app别名
+	Hash         string
+	Password     string
+	ReqIpPort    string
+	Role         string
+	PublicKey    string
+	TokenName    string
+	Decimals     int64
+	ContractAddr string
+	CoinCategory int64 //币种分类
+	CoinUsed     bool  //币种使用
+}
+
+type TokenInfo struct {
+	TokenName    string
+	Decimals     int64
+	ContractAddr string
+	Category     int64
+}
+
+type SignInfo struct {
+	AppId string
+	Sign  string
+}
+
 
 //请求数据
 type VReq struct {
