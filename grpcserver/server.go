@@ -115,7 +115,7 @@ func streamRecv(n *replyServer) {
 			}
 		}
 		timeCount++
-		time.Sleep(time.Second*5)
+		time.Sleep(time.Second * 5)
 	}
 	log.Info("end streamRecv")
 }
@@ -141,7 +141,7 @@ func heart(n *replyServer) {
 
 func router(n *replyServer) {
 	n.isRouther = true
-	for n.isRouther{
+	for n.isRouther {
 		select {
 		case data, ok := <-comm.GrpcStreamChan:
 			if ok {
@@ -192,6 +192,12 @@ func handleStream(streamRsp *pb.StreamRsp) {
 		return
 	}
 	switch streamModel.Type {
+	case comm.GRPC_HASH_ADD_REQ: //hash add申请
+		hash := streamModel.Hash.Hex()
+		approver := streamModel.Approver //审批人
+		content := streamModel.Content   //内容
+		comm.ReqChan <- &comm.RequestModel{Hash: hash, ReqType: comm.REQ_HASH_ADD, Approver: approver, Content: content}
+		break
 	case comm.GRPC_HASH_ENABLE_REQ: //同意
 		hash := streamModel.Hash.Hex()
 		if !common.HasHexPrefix(hash) || len(common.FromHex(hash)) != comm.HASH_ENABLE_LENGTH {
@@ -207,6 +213,16 @@ func handleStream(streamRsp *pb.StreamRsp) {
 		} else {
 			comm.ReqChan <- &comm.RequestModel{Hash: hash, ReqType: comm.REQ_HASH_DISABLE}
 		}
+		break
+	case comm.GRPC_WITHDRAW_REQ:
+		hash := streamModel.Hash.Hex()
+		wdHash := streamModel.WdHash.Hex()
+		recAddress := streamModel.To
+		amount := streamModel.Amount.String()
+		fee := streamModel.Fee.String()
+		category := streamModel.Category.Int64()
+
+		comm.ReqChan <- &comm.RequestModel{Hash: hash, ReqType: comm.REQ_OUT_APPROVE, WdHash: wdHash, RecAddress: recAddress, Amount: amount, Fee: fee, Category: category}
 		break
 	default:
 		log.Info("no type,streamModel:\n", streamModel)

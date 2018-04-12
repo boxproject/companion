@@ -80,7 +80,7 @@ const (
 
 //grpc接口
 const (
-	//GRPC_HASH_ADD_REQ     = "1"  //hash add申请 web
+	GRPC_HASH_ADD_REQ     = "1"  //hash add申请
 	GRPC_HASH_ADD_LOG     = "2"  //hans add 私链log
 	GRPC_HASH_ENABLE_REQ  = "3"  //hash enable 申请
 	GRPC_HASH_ENABLE_LOG  = "4"  //hash enable 私链log
