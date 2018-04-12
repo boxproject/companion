@@ -14,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
-	"time"
 )
 
 var (
@@ -79,10 +78,10 @@ func enableHashHandler(logW *EthEventLogWatcher, log *types.Log) error {
 		lastConfirmed := common.BytesToAddress(dataBytes[32:64])
 		logger.Debug("enableHashHandler......db....", hash)
 		if util.AddressEquals(lastConfirmed, common.HexToAddress(logW.appCfg.Creator)) { //最终确认人
-			if contentByte, err := logW.ldb.GetByte([]byte(comm.HASH_ADD_CONTENT_PREFIX + hash.Hex())); err != nil {
-				logger.Error("load content err:%v", err)
-			} else {
-				grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_HASH_ENABLE_LOG, Hash: hash, Content: string(contentByte), Status: comm.HASH_STATUS_ENABLE, CreateTime: time.Now()}
+			//if contentByte, err := logW.ldb.GetByte([]byte(comm.HASH_ADD_CONTENT_PREFIX + hash.Hex())); err != nil {
+			//	logger.Error("load content err:%v", err)
+			//} else {
+				grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_HASH_ENABLE_LOG, Hash: hash}
 				if grpcStreamJson, err := json.Marshal(grpcStream); err != nil {
 					logger.Error("EventStream marshal failed. cause:%v", err)
 				} else {
@@ -92,7 +91,7 @@ func enableHashHandler(logW *EthEventLogWatcher, log *types.Log) error {
 					}
 				}
 				comm.GrpcStreamChan <- grpcStream
-			}
+			//}
 		}
 	}
 	return nil
@@ -107,10 +106,10 @@ func disableHashHandler(logW *EthEventLogWatcher, log *types.Log) error {
 		logger.Debug("disableHashHandler......db....", hash)
 
 		if util.AddressEquals(lastConfirmed, common.HexToAddress(logW.appCfg.Creator)) { //最终确认人
-			if contentByte, err := logW.ldb.GetByte([]byte(comm.HASH_ADD_CONTENT_PREFIX + hash.Hex())); err != nil {
-				logger.Error("load content err:%v", err)
-			} else {
-				grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_HASH_DISABLE_LOG, Hash: hash, Content: string(contentByte), Status: comm.HASH_STATUS_DISABLE, CreateTime: time.Now()}
+			//if contentByte, err := logW.ldb.GetByte([]byte(comm.HASH_ADD_CONTENT_PREFIX + hash.Hex())); err != nil {
+			//	logger.Error("load content err:%v", err)
+			//} else {
+				grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_HASH_DISABLE_LOG, Hash: hash}
 				if grpcStreamJson, err := json.Marshal(grpcStream); err != nil {
 					logger.Error("EventStream marshal failed. cause:%v", err)
 				} else {
@@ -120,7 +119,7 @@ func disableHashHandler(logW *EthEventLogWatcher, log *types.Log) error {
 					}
 				}
 				comm.GrpcStreamChan <- grpcStream
-			}
+			//}
 		}
 	}
 	return nil
@@ -150,7 +149,7 @@ func withdrawApplyHandler(logW *EthEventLogWatcher, log *types.Log) error {
 		logger.Debug("withdrawAplyHandler......db....")
 		lastConfirmed := common.BytesToAddress(dataBytes[128:160])
 		if util.AddressEquals(lastConfirmed, common.HexToAddress(logW.appCfg.Creator)) { //最终确认人
-			grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_WITHDRAW_LOG, Hash: hash, WdHash: wdHash, Amount: amount, Fee: fee, To: to, Category: category, CreateTime: time.Now()}
+			grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_WITHDRAW_LOG, Hash: hash, WdHash: wdHash, Amount: amount, Fee: fee, To: to, Category: category}
 			if grpcStreamJson, err := json.Marshal(grpcStream); err != nil {
 				logger.Error("EventStream marshal failed. cause:%v", err)
 			} else {

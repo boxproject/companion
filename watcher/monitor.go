@@ -15,7 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"strings"
-	"time"
+	//"time"
 )
 
 type EthEventLogWatcher struct {
@@ -270,7 +270,7 @@ func (logW *EthEventLogWatcher) ReSendGrpcStream() error {
 					logger.Error("db unmarshal err: %v", err)
 				} else {
 					//update time
-					grpcStream.CreateTime = time.Now()
+					//grpcStream.CreateTime = time.Now()
 					comm.GrpcStreamChan <- grpcStream
 					//logger.Debug("resend....",grpcStream)
 					logger.Debug("grpc resend, type value:", grpcStream.Type)

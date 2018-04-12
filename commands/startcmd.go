@@ -8,10 +8,10 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 
 	logger "github.com/alecthomas/log4go"
-	"github.com/astaxie/beego"
+	//"github.com/astaxie/beego"
 	"github.com/boxproject/companion/comm"
 	"github.com/boxproject/companion/config"
-	"github.com/boxproject/companion/controllers"
+	//"github.com/boxproject/companion/controllers"
 	"github.com/boxproject/companion/db"
 	"github.com/boxproject/companion/grpcserver"
 	"github.com/boxproject/companion/handler"
