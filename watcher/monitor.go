@@ -160,22 +160,19 @@ func (logW *EthEventLogWatcher) checkLogs(blkNumber *big.Int) error {
 		logger.Debug("FilterLogs :%s", err)
 		return err
 	} else {
-		if len(logs) == 0 {
-			return nil
-		}
-		for _, log := range logs {
-			handler, ok := logW.eventHandlerMap[log.Topics[0]]
-
-			//WriteCheckpointBlockNumberToFile(logW.blkFile, big.NewInt(int64(log.BlockNumber)))
-			if !ok {
-				logger.Info("false No ==> %s", log.Topics[0].Hex())
-				continue
-			}
-			logger.Info("true No ==> %s", log.Topics[0].Hex())
-			if err = handler(logW, &log); err != nil {
-				logger.Error("log handler err: %s", err)
-				WriteCheckpointBlockNumberToFile(logW.blkFile, big.NewInt(int64(log.BlockNumber)))
-				return err
+		if len(logs) != 0 {
+			for _, log := range logs {
+				handler, ok := logW.eventHandlerMap[log.Topics[0]]
+				if !ok {
+					logger.Info("false No ==> %s", log.Topics[0].Hex())
+					continue
+				}
+				logger.Info("true No ==> %s", log.Topics[0].Hex())
+				if err = handler(logW, &log); err != nil {
+					logger.Error("log handler err: %s", err)
+					WriteCheckpointBlockNumberToFile(logW.blkFile, big.NewInt(int64(log.BlockNumber)))
+					return err
+				}
 			}
 		}
 		WriteCheckpointBlockNumberToFile(logW.blkFile, blkNumber)

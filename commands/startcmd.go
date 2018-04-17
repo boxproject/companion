@@ -93,7 +93,8 @@ func connPriChain(c *cli.Context, cfg *config.Config, ldb *db.Ldb) (*watcher.Eth
 		cursorPath = cfg.PriEthCfg.CursorFilePath
 	}
 
-	blkFile := GetConfigFilePath(cursorPath, comm.DEF_CURSOR_FILE_PATH)
+	//blkFile := GetConfigFilePath(cursorPath, comm.DEF_CURSOR_FILE_PATH)
+	blkFile := cfg.PriEthCfg.CursorFilePath
 	logger.Debug("Blockfile: %s", blkFile)
 
 	logWatcher, err := watcher.NewEthEventLogWatcher(priClient, &cfg.PriEthCfg, blkFile, ldb)
