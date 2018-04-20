@@ -20,6 +20,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"strings"
 )
 
 //
@@ -105,7 +106,7 @@ func streamRecv(n *replyServer) {
 				}
 			}()
 			//启动心跳检测
-			go heart(n)
+			//go heart(n)
 			//路由发送
 			go router(n)
 			<-waitc
@@ -200,7 +201,7 @@ func handleStream(streamRsp *pb.StreamRsp) {
 		break
 	case comm.GRPC_HASH_ENABLE_REQ: //同意
 		hash := streamModel.Hash.Hex()
-		if !common.HasHexPrefix(hash) || len(common.FromHex(hash)) != comm.HASH_ENABLE_LENGTH {
+		if !strings.HasPrefix(hash, comm.HASH_PRIFIX) || len(common.FromHex(hash)) != comm.HASH_ENABLE_LENGTH {
 			log.Error("allow err")
 		} else {
 			comm.ReqChan <- &comm.RequestModel{Hash: hash, ReqType: comm.REQ_HASH_ENABLE}
@@ -208,7 +209,7 @@ func handleStream(streamRsp *pb.StreamRsp) {
 		break
 	case comm.GRPC_HASH_DISABLE_REQ: //禁用
 		hash := streamModel.Hash.Hex()
-		if !common.HasHexPrefix(hash) || len(common.FromHex(hash)) != comm.HASH_ENABLE_LENGTH {
+		if !strings.HasPrefix(hash, comm.HASH_PRIFIX) || len(common.FromHex(hash)) != comm.HASH_ENABLE_LENGTH {
 			log.Error("disallow err")
 		} else {
 			comm.ReqChan <- &comm.RequestModel{Hash: hash, ReqType: comm.REQ_HASH_DISABLE}

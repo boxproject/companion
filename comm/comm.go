@@ -8,6 +8,8 @@ import (
 	"github.com/boxproject/companion/db"
 )
 
+const HASH_PREFIX = "0x"
+
 //default
 const (
 	DEF_CURSOR_FILE_PATH = "cursor.txt"

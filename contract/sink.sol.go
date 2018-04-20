@@ -7,10 +7,12 @@ import (
 	"math/big"
 	"strings"
 
+	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/event"
 )
 
 // OracleABI is the input ABI used to generate the binding from.
@@ -29,13 +31,14 @@ func DeployOracle(auth *bind.TransactOpts, backend bind.ContractBackend) (common
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
-	return address, tx, &Oracle{OracleCaller: OracleCaller{contract: contract}, OracleTransactor: OracleTransactor{contract: contract}}, nil
+	return address, tx, &Oracle{OracleCaller: OracleCaller{contract: contract}, OracleTransactor: OracleTransactor{contract: contract}, OracleFilterer: OracleFilterer{contract: contract}}, nil
 }
 
 // Oracle is an auto generated Go binding around an Ethereum contract.
 type Oracle struct {
 	OracleCaller     // Read-only binding to the contract
 	OracleTransactor // Write-only binding to the contract
+	OracleFilterer   // Log filterer for contract events
 }
 
 // OracleCaller is an auto generated read-only Go binding around an Ethereum contract.
@@ -45,6 +48,11 @@ type OracleCaller struct {
 
 // OracleTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type OracleTransactor struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// OracleFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type OracleFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
@@ -87,16 +95,16 @@ type OracleTransactorRaw struct {
 
 // NewOracle creates a new instance of Oracle, bound to a specific deployed contract.
 func NewOracle(address common.Address, backend bind.ContractBackend) (*Oracle, error) {
-	contract, err := bindOracle(address, backend, backend)
+	contract, err := bindOracle(address, backend, backend, backend)
 	if err != nil {
 		return nil, err
 	}
-	return &Oracle{OracleCaller: OracleCaller{contract: contract}, OracleTransactor: OracleTransactor{contract: contract}}, nil
+	return &Oracle{OracleCaller: OracleCaller{contract: contract}, OracleTransactor: OracleTransactor{contract: contract}, OracleFilterer: OracleFilterer{contract: contract}}, nil
 }
 
 // NewOracleCaller creates a new read-only instance of Oracle, bound to a specific deployed contract.
 func NewOracleCaller(address common.Address, caller bind.ContractCaller) (*OracleCaller, error) {
-	contract, err := bindOracle(address, caller, nil)
+	contract, err := bindOracle(address, caller, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -105,20 +113,29 @@ func NewOracleCaller(address common.Address, caller bind.ContractCaller) (*Oracl
 
 // NewOracleTransactor creates a new write-only instance of Oracle, bound to a specific deployed contract.
 func NewOracleTransactor(address common.Address, transactor bind.ContractTransactor) (*OracleTransactor, error) {
-	contract, err := bindOracle(address, nil, transactor)
+	contract, err := bindOracle(address, nil, transactor, nil)
 	if err != nil {
 		return nil, err
 	}
 	return &OracleTransactor{contract: contract}, nil
 }
 
+// NewOracleFilterer creates a new log filterer instance of Oracle, bound to a specific deployed contract.
+func NewOracleFilterer(address common.Address, filterer bind.ContractFilterer) (*OracleFilterer, error) {
+	contract, err := bindOracle(address, nil, nil, filterer)
+	if err != nil {
+		return nil, err
+	}
+	return &OracleFilterer{contract: contract}, nil
+}
+
 // bindOracle binds a generic wrapper to an already deployed contract.
-func bindOracle(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor) (*bind.BoundContract, error) {
+func bindOracle(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
 	parsed, err := abi.JSON(strings.NewReader(OracleABI))
 	if err != nil {
 		return nil, err
 	}
-	return bind.NewBoundContract(address, parsed, caller, transactor), nil
+	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
 }
 
 // Call invokes the (constant) contract method with params as input values and
@@ -351,13 +368,14 @@ func DeploySink(auth *bind.TransactOpts, backend bind.ContractBackend, ref commo
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
-	return address, tx, &Sink{SinkCaller: SinkCaller{contract: contract}, SinkTransactor: SinkTransactor{contract: contract}}, nil
+	return address, tx, &Sink{SinkCaller: SinkCaller{contract: contract}, SinkTransactor: SinkTransactor{contract: contract}, SinkFilterer: SinkFilterer{contract: contract}}, nil
 }
 
 // Sink is an auto generated Go binding around an Ethereum contract.
 type Sink struct {
 	SinkCaller     // Read-only binding to the contract
 	SinkTransactor // Write-only binding to the contract
+	SinkFilterer   // Log filterer for contract events
 }
 
 // SinkCaller is an auto generated read-only Go binding around an Ethereum contract.
@@ -367,6 +385,11 @@ type SinkCaller struct {
 
 // SinkTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type SinkTransactor struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// SinkFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type SinkFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
@@ -409,16 +432,16 @@ type SinkTransactorRaw struct {
 
 // NewSink creates a new instance of Sink, bound to a specific deployed contract.
 func NewSink(address common.Address, backend bind.ContractBackend) (*Sink, error) {
-	contract, err := bindSink(address, backend, backend)
+	contract, err := bindSink(address, backend, backend, backend)
 	if err != nil {
 		return nil, err
 	}
-	return &Sink{SinkCaller: SinkCaller{contract: contract}, SinkTransactor: SinkTransactor{contract: contract}}, nil
+	return &Sink{SinkCaller: SinkCaller{contract: contract}, SinkTransactor: SinkTransactor{contract: contract}, SinkFilterer: SinkFilterer{contract: contract}}, nil
 }
 
 // NewSinkCaller creates a new read-only instance of Sink, bound to a specific deployed contract.
 func NewSinkCaller(address common.Address, caller bind.ContractCaller) (*SinkCaller, error) {
-	contract, err := bindSink(address, caller, nil)
+	contract, err := bindSink(address, caller, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -427,20 +450,29 @@ func NewSinkCaller(address common.Address, caller bind.ContractCaller) (*SinkCal
 
 // NewSinkTransactor creates a new write-only instance of Sink, bound to a specific deployed contract.
 func NewSinkTransactor(address common.Address, transactor bind.ContractTransactor) (*SinkTransactor, error) {
-	contract, err := bindSink(address, nil, transactor)
+	contract, err := bindSink(address, nil, transactor, nil)
 	if err != nil {
 		return nil, err
 	}
 	return &SinkTransactor{contract: contract}, nil
 }
 
+// NewSinkFilterer creates a new log filterer instance of Sink, bound to a specific deployed contract.
+func NewSinkFilterer(address common.Address, filterer bind.ContractFilterer) (*SinkFilterer, error) {
+	contract, err := bindSink(address, nil, nil, filterer)
+	if err != nil {
+		return nil, err
+	}
+	return &SinkFilterer{contract: contract}, nil
+}
+
 // bindSink binds a generic wrapper to an already deployed contract.
-func bindSink(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor) (*bind.BoundContract, error) {
+func bindSink(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
 	parsed, err := abi.JSON(strings.NewReader(SinkABI))
 	if err != nil {
 		return nil, err
 	}
-	return bind.NewBoundContract(address, parsed, caller, transactor), nil
+	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
 }
 
 // Call invokes the (constant) contract method with params as input values and
@@ -640,4 +672,519 @@ func (_Sink *SinkSession) Enable(hash [32]byte) (*types.Transaction, error) {
 // Solidity: function enable(hash bytes32) returns(bool)
 func (_Sink *SinkTransactorSession) Enable(hash [32]byte) (*types.Transaction, error) {
 	return _Sink.Contract.Enable(&_Sink.TransactOpts, hash)
+}
+
+// SinkSignflowAddedIterator is returned from FilterSignflowAdded and is used to iterate over the raw logs and unpacked data for SignflowAdded events raised by the Sink contract.
+type SinkSignflowAddedIterator struct {
+	Event *SinkSignflowAdded // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *SinkSignflowAddedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(SinkSignflowAdded)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(SinkSignflowAdded)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *SinkSignflowAddedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *SinkSignflowAddedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// SinkSignflowAdded represents a SignflowAdded event raised by the Sink contract.
+type SinkSignflowAdded struct {
+	Hash          [32]byte
+	LastConfirmed common.Address
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterSignflowAdded is a free log retrieval operation binding the contract event 0x9f3f4c1672a4880364b07219cd9428dbc8a88774f53b12b98fae406c5a30ee5c.
+//
+// Solidity: event SignflowAdded(hash bytes32, lastConfirmed address)
+func (_Sink *SinkFilterer) FilterSignflowAdded(opts *bind.FilterOpts) (*SinkSignflowAddedIterator, error) {
+
+	logs, sub, err := _Sink.contract.FilterLogs(opts, "SignflowAdded")
+	if err != nil {
+		return nil, err
+	}
+	return &SinkSignflowAddedIterator{contract: _Sink.contract, event: "SignflowAdded", logs: logs, sub: sub}, nil
+}
+
+// WatchSignflowAdded is a free log subscription operation binding the contract event 0x9f3f4c1672a4880364b07219cd9428dbc8a88774f53b12b98fae406c5a30ee5c.
+//
+// Solidity: event SignflowAdded(hash bytes32, lastConfirmed address)
+func (_Sink *SinkFilterer) WatchSignflowAdded(opts *bind.WatchOpts, sink chan<- *SinkSignflowAdded) (event.Subscription, error) {
+
+	logs, sub, err := _Sink.contract.WatchLogs(opts, "SignflowAdded")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(SinkSignflowAdded)
+				if err := _Sink.contract.UnpackLog(event, "SignflowAdded", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// SinkSignflowDisabledIterator is returned from FilterSignflowDisabled and is used to iterate over the raw logs and unpacked data for SignflowDisabled events raised by the Sink contract.
+type SinkSignflowDisabledIterator struct {
+	Event *SinkSignflowDisabled // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *SinkSignflowDisabledIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(SinkSignflowDisabled)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(SinkSignflowDisabled)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *SinkSignflowDisabledIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *SinkSignflowDisabledIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// SinkSignflowDisabled represents a SignflowDisabled event raised by the Sink contract.
+type SinkSignflowDisabled struct {
+	Hash          [32]byte
+	LastConfirmed common.Address
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterSignflowDisabled is a free log retrieval operation binding the contract event 0x484f49c7a40838d935f9cd616461fad6033bb6f7fa4491fbc72941d77671f09f.
+//
+// Solidity: event SignflowDisabled(hash bytes32, lastConfirmed address)
+func (_Sink *SinkFilterer) FilterSignflowDisabled(opts *bind.FilterOpts) (*SinkSignflowDisabledIterator, error) {
+
+	logs, sub, err := _Sink.contract.FilterLogs(opts, "SignflowDisabled")
+	if err != nil {
+		return nil, err
+	}
+	return &SinkSignflowDisabledIterator{contract: _Sink.contract, event: "SignflowDisabled", logs: logs, sub: sub}, nil
+}
+
+// WatchSignflowDisabled is a free log subscription operation binding the contract event 0x484f49c7a40838d935f9cd616461fad6033bb6f7fa4491fbc72941d77671f09f.
+//
+// Solidity: event SignflowDisabled(hash bytes32, lastConfirmed address)
+func (_Sink *SinkFilterer) WatchSignflowDisabled(opts *bind.WatchOpts, sink chan<- *SinkSignflowDisabled) (event.Subscription, error) {
+
+	logs, sub, err := _Sink.contract.WatchLogs(opts, "SignflowDisabled")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(SinkSignflowDisabled)
+				if err := _Sink.contract.UnpackLog(event, "SignflowDisabled", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// SinkSignflowEnabledIterator is returned from FilterSignflowEnabled and is used to iterate over the raw logs and unpacked data for SignflowEnabled events raised by the Sink contract.
+type SinkSignflowEnabledIterator struct {
+	Event *SinkSignflowEnabled // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *SinkSignflowEnabledIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(SinkSignflowEnabled)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(SinkSignflowEnabled)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *SinkSignflowEnabledIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *SinkSignflowEnabledIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// SinkSignflowEnabled represents a SignflowEnabled event raised by the Sink contract.
+type SinkSignflowEnabled struct {
+	Hash          [32]byte
+	LastConfirmed common.Address
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterSignflowEnabled is a free log retrieval operation binding the contract event 0x50177799234754a6d6af99e5ab43b5679c202f4058d342099bfb35acdfa1a867.
+//
+// Solidity: event SignflowEnabled(hash bytes32, lastConfirmed address)
+func (_Sink *SinkFilterer) FilterSignflowEnabled(opts *bind.FilterOpts) (*SinkSignflowEnabledIterator, error) {
+
+	logs, sub, err := _Sink.contract.FilterLogs(opts, "SignflowEnabled")
+	if err != nil {
+		return nil, err
+	}
+	return &SinkSignflowEnabledIterator{contract: _Sink.contract, event: "SignflowEnabled", logs: logs, sub: sub}, nil
+}
+
+// WatchSignflowEnabled is a free log subscription operation binding the contract event 0x50177799234754a6d6af99e5ab43b5679c202f4058d342099bfb35acdfa1a867.
+//
+// Solidity: event SignflowEnabled(hash bytes32, lastConfirmed address)
+func (_Sink *SinkFilterer) WatchSignflowEnabled(opts *bind.WatchOpts, sink chan<- *SinkSignflowEnabled) (event.Subscription, error) {
+
+	logs, sub, err := _Sink.contract.WatchLogs(opts, "SignflowEnabled")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(SinkSignflowEnabled)
+				if err := _Sink.contract.UnpackLog(event, "SignflowEnabled", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// SinkWithdrawAppliedIterator is returned from FilterWithdrawApplied and is used to iterate over the raw logs and unpacked data for WithdrawApplied events raised by the Sink contract.
+type SinkWithdrawAppliedIterator struct {
+	Event *SinkWithdrawApplied // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *SinkWithdrawAppliedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(SinkWithdrawApplied)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(SinkWithdrawApplied)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *SinkWithdrawAppliedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *SinkWithdrawAppliedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// SinkWithdrawApplied represents a WithdrawApplied event raised by the Sink contract.
+type SinkWithdrawApplied struct {
+	Hash          [32]byte
+	TxHash        [32]byte
+	Amount        *big.Int
+	Fee           *big.Int
+	Recipient     common.Address
+	Category      *big.Int
+	LastConfirmed common.Address
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterWithdrawApplied is a free log retrieval operation binding the contract event 0x7f508fd15756f38a4426383f9ef243dfccdfdff0a528e755b113ef8bef2c5c2e.
+//
+// Solidity: event WithdrawApplied(hash indexed bytes32, txHash indexed bytes32, amount uint256, fee uint256, recipient address, category uint256, lastConfirmed address)
+func (_Sink *SinkFilterer) FilterWithdrawApplied(opts *bind.FilterOpts, hash [][32]byte, txHash [][32]byte) (*SinkWithdrawAppliedIterator, error) {
+
+	var hashRule []interface{}
+	for _, hashItem := range hash {
+		hashRule = append(hashRule, hashItem)
+	}
+	var txHashRule []interface{}
+	for _, txHashItem := range txHash {
+		txHashRule = append(txHashRule, txHashItem)
+	}
+
+	logs, sub, err := _Sink.contract.FilterLogs(opts, "WithdrawApplied", hashRule, txHashRule)
+	if err != nil {
+		return nil, err
+	}
+	return &SinkWithdrawAppliedIterator{contract: _Sink.contract, event: "WithdrawApplied", logs: logs, sub: sub}, nil
+}
+
+// WatchWithdrawApplied is a free log subscription operation binding the contract event 0x7f508fd15756f38a4426383f9ef243dfccdfdff0a528e755b113ef8bef2c5c2e.
+//
+// Solidity: event WithdrawApplied(hash indexed bytes32, txHash indexed bytes32, amount uint256, fee uint256, recipient address, category uint256, lastConfirmed address)
+func (_Sink *SinkFilterer) WatchWithdrawApplied(opts *bind.WatchOpts, sink chan<- *SinkWithdrawApplied, hash [][32]byte, txHash [][32]byte) (event.Subscription, error) {
+
+	var hashRule []interface{}
+	for _, hashItem := range hash {
+		hashRule = append(hashRule, hashItem)
+	}
+	var txHashRule []interface{}
+	for _, txHashItem := range txHash {
+		txHashRule = append(txHashRule, txHashItem)
+	}
+
+	logs, sub, err := _Sink.contract.WatchLogs(opts, "WithdrawApplied", hashRule, txHashRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(SinkWithdrawApplied)
+				if err := _Sink.contract.UnpackLog(event, "WithdrawApplied", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
 }

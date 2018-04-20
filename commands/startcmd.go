@@ -88,10 +88,10 @@ func connPriChain(c *cli.Context, cfg *config.Config, ldb *db.Ldb) (*watcher.Eth
 		return nil, err
 	}
 
-	cursorPath := c.String("b") //priority
-	if cursorPath == "" {
-		cursorPath = cfg.PriEthCfg.CursorFilePath
-	}
+	//cursorPath := c.String("b") //priority
+	//if cursorPath == "" {
+	//	cursorPath = cfg.PriEthCfg.CursorFilePath
+	//}
 
 	//blkFile := GetConfigFilePath(cursorPath, comm.DEF_CURSOR_FILE_PATH)
 	blkFile := cfg.PriEthCfg.CursorFilePath
