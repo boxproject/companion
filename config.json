@@ -1,0 +1,32 @@
+{
+  "pri_eth": {
+    "creator":"0xf3572186506dd3dc8a328a8a0e3f900b68bc87f2",
+    "creator_passphrase": "101",
+    "creator_keystore_path": "/Users/admin/ether/data0/keystore/UTC--2018-03-12T02-01-36.057683381Z--f3572186506dd3dc8a328a8a0e3f900b68bc87f2",
+    "geth_api": "ws://127.0.0.1:8546",
+    "check_block_before": 0,
+    "cursor_file_path":"/Users/admin/Work/src/github.com/boxproject/companion/cursor.txt",
+    "scan_interval": 5,
+    "gas_limit":10000000,
+    "gas_price":2,
+    "wallet_gas": 291654,
+    "factory_gas": 513617
+  },
+  "router_info":{
+    "ser_voucher":"voucher",
+    "ser_companion":"companion",
+    "companion_name":"comp-001"
+  },
+  "level_db_path":"/Users/admin/leveldb",
+  "sink_address":"0x6A70807545EC6307d5bFFceE2CDd8BdD8AB80fa9",
+  "server_cert":"/Users/admin/ssl/server.pem",
+  "server_key":"/Users/admin/ssl/server.key",
+  "client_cert":"/Users/admin/ssl/client.pem",
+  "client_key":"/Users/admin/ssl/client.key",
+  "grpc_ser_host":"127.0.0.1:50502",
+  "grpc_ser_port":":50502",
+  "account_url":"http://192.168.199.183:5002/box/v1/capital/account/add",
+  "deposit_url":"http://192.168.199.183:5002/box/v1/capital/deposit",
+  "withdraw_url":"http://192.168.199.183:5002/box/v1/capital/withdraw",
+  "withdraw_tx_url":"http://192.168.199.183:5002/box/v1/capital/withdraw/id"
+}
