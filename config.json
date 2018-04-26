@@ -19,14 +19,8 @@
   },
   "level_db_path":"/Users/admin/leveldb",
   "sink_address":"0x6A70807545EC6307d5bFFceE2CDd8BdD8AB80fa9",
-  "server_cert":"/Users/admin/ssl/server.pem",
-  "server_key":"/Users/admin/ssl/server.key",
   "client_cert":"/Users/admin/ssl/client.pem",
   "client_key":"/Users/admin/ssl/client.key",
   "grpc_ser_host":"127.0.0.1:50502",
-  "grpc_ser_port":":50502",
-  "account_url":"http://192.168.199.183:5002/box/v1/capital/account/add",
-  "deposit_url":"http://192.168.199.183:5002/box/v1/capital/deposit",
-  "withdraw_url":"http://192.168.199.183:5002/box/v1/capital/withdraw",
-  "withdraw_tx_url":"http://192.168.199.183:5002/box/v1/capital/withdraw/id"
+  "grpc_ser_port":":50502"
 }
