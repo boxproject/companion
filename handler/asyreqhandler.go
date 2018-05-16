@@ -155,7 +155,7 @@ func (this *PriAsyEthHandler) disableHash(req *comm.RequestModel) error {
 func (this *PriAsyEthHandler) approve(req *comm.RequestModel) error {
 	logger.Debug("PriAsyEthHandler approve....")
 
-	if err := this.ldb.PutStrWithPrifix(comm.APPROVE_RECADDR_PREFIX, req.Hash, req.RecAddress); err != nil { //recaddress 内容存入db，供私链申请同意后查询使用
+	if err := this.ldb.PutStrWithPrifix(comm.APPROVE_RECADDR_PREFIX, req.WdHash, req.RecAddress); err != nil { //recaddress 内容存入db，供私链申请同意后查询使用
 		logger.Error("land to db failed: %s", err)
 		return err
 	}
