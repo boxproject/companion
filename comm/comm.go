@@ -159,7 +159,7 @@ type Operate struct {
 	Hash         string
 	Password     string
 	ReqIpPort    string
-	Role         string
+	Code         string
 	PublicKey    string
 	TokenName    string
 	Decimals     int64
