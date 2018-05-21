@@ -108,6 +108,11 @@ const (
 	GRPC_DB_PREFIX = "grpc_"
 )
 
+const (
+	DEF_NONCE  = 0
+	NONCE_PLUS = 1
+)
+
 //上报类型
 const (
 	REQ_ACCOUNT_ADD = "1" //账户上报

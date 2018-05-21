@@ -25,6 +25,7 @@ type EthCfg struct {
 	GethAPI             string `json:"geth_api"`              // GethAPI 以太坊接口地址，要支持websocket
 	CheckBlockBefore    int64  `json:"check_block_before"`    // CheckBlockBefore 设置当前块向前推若干个块做校验
 	CursorFilePath      string `json:"cursor_file_path"`      // CursorFilePath 设置当前块处理游标
+	NonceFilePath       string `json:"nonce_file_path,omitempty"`//NonceFilePath记录当前块处理nonce
 	GasLimit            int64  `json:"gas_limit"`             //执行方法gaslimit
 	GasPrice            int64  `json:"gas_price"`             //执行gasprice
 	WalletGas           int    `json:"wallet_gas"`            // 部署wallet所需gas

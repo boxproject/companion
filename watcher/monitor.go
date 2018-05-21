@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"strings"
+	"github.com/boxproject/companion/util"
 	//"time"
 )
 
@@ -82,6 +83,13 @@ func (logW *EthEventLogWatcher) Initial(events map[common.Hash]EventHandler) err
 	logger.Info("logW.blkFile---------", logW.blkFile)
 
 	WriteCheckpointBlockNumberToFile(logW.blkFile, new(big.Int).Sub(cursorBlkNumber, big.NewInt(1)))
+
+	//nonce值初始化
+	nonce, err := logW.client.NonceAt(context.Background(), common.HexToAddress(logW.appCfg.Creator), maxBlkNumber)
+	if err != nil { //设置初始值nonce值
+		logger.Error("get nonce err: %s", err)
+	}
+	util.WriteNumberToFile(logW.appCfg.NonceFilePath, big.NewInt(int64(nonce)))
 
 	logger.Debug("after:: cursor blkNumber: %s", cursorBlkNumber.String())
 	return nil

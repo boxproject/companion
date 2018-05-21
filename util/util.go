@@ -8,6 +8,11 @@ import (
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"net"
+	"math/big"
+	"os"
+	"sync"
+	log "github.com/alecthomas/log4go"
+	"io/ioutil"
 )
 
 //byte[] --> byte[32] 不校验长度，已校验过
@@ -63,3 +68,29 @@ func GetCurrentIp() string {
 	}
 	return "localhost"
 }
+
+//file
+var noRWMutex sync.RWMutex
+func WriteNumberToFile(filePath string, blkNumber *big.Int) error {
+	noRWMutex.Lock()
+	defer noRWMutex.Unlock()
+	return ioutil.WriteFile(filePath, []byte(blkNumber.String()), 0755)
+}
+
+func ReadNumberFromFile(filePath string) (*big.Int, error) {
+	noRWMutex.Lock()
+	defer noRWMutex.Unlock()
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		log.Debug("file not found, %v", err)
+		return big.NewInt(0), nil
+	}
+
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	data = bytes.TrimSpace(data)
+	delta, _ := big.NewInt(0).SetString(string(data), 10)
+	return delta, nil
+	}
