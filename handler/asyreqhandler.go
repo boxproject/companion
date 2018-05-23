@@ -85,20 +85,29 @@ func (this *PriAsyEthHandler) addHash(req *comm.RequestModel) error {
 		return err
 	}
 
+	nonce, err := util.ReadNumberFromFile(this.ethCfg.NonceFilePath) //nonce file
+	if err != nil {
+		logger.Error("read block info err :%s", err)
+		return err
+	}
+
+	opts.Nonce = nonce
+	logger.Debug("current nonce :%d", nonce.Int64())
+
 	sink, err := contract.NewSink(this.sinkAddress, this.client)
 	if err != nil {
 		logger.Error("NewSink error: %s", err)
 		return err
 	}
 	hash32 := util.Byte2Byte32(common.FromHex(req.Hash))
-	tx, err := sink.AddHash(opts, hash32)
-
-	if err != nil {
-		logger.Error(err)
+	if tx, err := sink.AddHash(opts, hash32); err != nil {
+		logger.Error("add hash err: %s", err)
 		return err
+	} else {
+		logger.Info("PriAsyEthHandler addHash tx: %s", tx.Hash().Hex())
+		nonce = nonce.Add(nonce, big.NewInt(comm.NONCE_PLUS))
+		util.WriteNumberToFile(this.ethCfg.NonceFilePath, nonce)
 	}
-
-	logger.Info("PriAsyEthHandler addHash tx: %s", tx.Hash().Hex())
 	return nil
 }
 
@@ -111,18 +120,29 @@ func (this *PriAsyEthHandler) enableHash(req *comm.RequestModel) error {
 		return err
 	}
 
+	nonce, err := util.ReadNumberFromFile(this.ethCfg.NonceFilePath) //nonce file
+	if err != nil {
+		logger.Error("read block info err :%s", err)
+		return err
+	}
+
+	opts.Nonce = nonce
+	logger.Debug("current nonce :%d", nonce.Int64())
+
 	sink, err := contract.NewSink(this.sinkAddress, this.client)
 	if err != nil {
 		logger.Info("NewSink error: %s", err)
 	}
 	hash32 := util.Byte2Byte32(common.FromHex(req.Hash))
-	tx, err := sink.Enable(opts, hash32)
-
-	if err != nil {
-		logger.Info(err)
+	if tx, err := sink.Enable(opts, hash32); err != nil {
+		logger.Info("enable hash err: %s",err)
 		return err
+	} else {
+		logger.Info("PriAsyEthHandler enableHash: %s", tx.Hash().Hex())
+		nonce = nonce.Add(nonce, big.NewInt(comm.NONCE_PLUS))
+		util.WriteNumberToFile(this.ethCfg.NonceFilePath, nonce)
 	}
-	logger.Info("PriAsyEthHandler enableHash: %s", tx.Hash().Hex())
+
 	return nil
 }
 
@@ -135,19 +155,29 @@ func (this *PriAsyEthHandler) disableHash(req *comm.RequestModel) error {
 		return err
 	}
 
+	nonce, err := util.ReadNumberFromFile(this.ethCfg.NonceFilePath) //nonce file
+	if err != nil {
+		logger.Error("read block info err :%s", err)
+		return err
+	}
+
+	opts.Nonce = nonce
+	logger.Debug("current nonce :%d", nonce.Int64())
+
 	sink, err := contract.NewSink(this.sinkAddress, this.client)
 	if err != nil {
 		logger.Info("NewSink error: %s", err)
 	}
 
 	hash32 := util.Byte2Byte32(common.FromHex(req.Hash))
-	tx, err := sink.Disable(opts, hash32)
-
-	if err != nil {
-		logger.Info(err)
+	if tx, err := sink.Disable(opts, hash32); err != nil {
+		logger.Info("disable hash err: %s",err)
 		return err
+	} else {
+		logger.Info("Transaction disableHash: %s\n", tx.Hash().Hex())
+		nonce = nonce.Add(nonce, big.NewInt(comm.NONCE_PLUS))
+		util.WriteNumberToFile(this.ethCfg.NonceFilePath, nonce)
 	}
-	logger.Info("Transaction hash: %s\n", tx.Hash().Hex())
 	return nil
 }
 
@@ -155,7 +185,7 @@ func (this *PriAsyEthHandler) disableHash(req *comm.RequestModel) error {
 func (this *PriAsyEthHandler) approve(req *comm.RequestModel) error {
 	logger.Debug("PriAsyEthHandler approve....")
 
-	if err := this.ldb.PutStrWithPrifix(comm.APPROVE_RECADDR_PREFIX, req.Hash, req.RecAddress); err != nil { //recaddress 内容存入db，供私链申请同意后查询使用
+	if err := this.ldb.PutStrWithPrifix(comm.APPROVE_RECADDR_PREFIX, req.WdHash, req.RecAddress); err != nil { //recaddress 内容存入db，供私链申请同意后查询使用
 		logger.Error("land to db failed: %s", err)
 		return err
 	}
@@ -165,6 +195,15 @@ func (this *PriAsyEthHandler) approve(req *comm.RequestModel) error {
 		logger.Info("Create options failed: %s", err)
 		return err
 	}
+
+	nonce, err := util.ReadNumberFromFile(this.ethCfg.NonceFilePath) //nonce file
+	if err != nil {
+		logger.Error("read block info err :%s", err)
+		return err
+	}
+
+	opts.Nonce = nonce
+	logger.Debug("current nonce :%d", nonce.Int64())
 
 	sink, err := contract.NewSink(this.sinkAddress, this.client)
 	if err != nil {
@@ -180,18 +219,22 @@ func (this *PriAsyEthHandler) approve(req *comm.RequestModel) error {
 	fee := new(big.Int)
 	fee.SetString(req.Fee, 10)
 	category := big.NewInt(req.Category)
-	recAddress,err := util.GetRecAddress(*req)
-	if err != nil{
-		logger.Info(err)
-		return err
-	}
-	tx, err := sink.Approve(opts, wdHash32, amount, fee, recAddress, hash32, category)
-
+	recAddress, err := util.GetRecAddress(*req)
 	if err != nil {
-		logger.Info(err)
+		logger.Error("getRecAddress err:", err)
 		return err
 	}
-	logger.Info("Transaction hash: %s\n", tx.Hash().Hex())
+
+	logger.Debug("recAddress...", recAddress.Hex())
+	if tx, err := sink.Approve(opts, wdHash32, amount, fee, recAddress, hash32, category); err != nil {
+		logger.Error("approve tx err: %s", err)
+		return err
+	} else {
+		logger.Info("Transaction hash: %s\n", tx.Hash().Hex())
+		nonce = nonce.Add(nonce, big.NewInt(comm.NONCE_PLUS))
+		util.WriteNumberToFile(this.ethCfg.NonceFilePath, nonce)
+	}
+
 	return nil
 }
 
@@ -204,8 +247,8 @@ func (this *PriAsyEthHandler) createTransactor(filePath, passphrase string) (*bi
 	if transactor, err := bind.NewTransactor(keyFile, passphrase); err != nil {
 		return nil, err
 	} else {
-		transactor.GasLimit = uint64(this.ethCfg.GasLimit)
-		transactor.GasPrice = big.NewInt(this.ethCfg.GasPrice)
+		//transactor.GasLimit = uint64(this.ethCfg.GasLimit)
+		//transactor.GasPrice = big.NewInt(this.ethCfg.GasPrice)
 		return transactor, nil
 	}
 }

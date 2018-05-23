@@ -6,6 +6,7 @@
     "geth_api": "ws://127.0.0.1:8546",
     "check_block_before": 0,
     "cursor_file_path":"/Users/admin/Work/src/github.com/boxproject/companion/cursor.txt",
+    "nonce_file_path": "/Users/admin/Work/src/github.com/boxproject/companion/nonce.txt",
     "scan_interval": 5,
     "gas_limit":10000000,
     "gas_price":2,
