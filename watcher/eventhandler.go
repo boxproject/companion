@@ -138,7 +138,7 @@ func withdrawApplyHandler(logW *EthEventLogWatcher, log *types.Log) error {
 		var to string = ""
 		if category.Int64() == comm.CATEGORY_BTC {
 			//获取db中的地址数据
-			if recAddrByte, err := logW.ldb.GetByte([]byte(comm.APPROVE_RECADDR_PREFIX + hash.Hex())); err != nil {
+			if recAddrByte, err := logW.ldb.GetByte([]byte(comm.APPROVE_RECADDR_PREFIX + wdHash.Hex())); err != nil {
 				logger.Error("load recAddress err:%v", err)
 			} else {
 				to = string(recAddrByte)
