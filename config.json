@@ -1,14 +1,13 @@
 {
   "pri_eth": {
-    "creator":"0xf3572186506dd3dc8a328a8a0e3f900b68bc87f2",
-    "creator_passphrase": "101",
-    "creator_keystore_path": "/Users/wangzl/ether/data0/keystore/UTC--2018-03-12T02-01-36.057683381Z--f3572186506dd3dc8a328a8a0e3f900b68bc87f2",
-    "geth_api": "ws://127.0.0.1:8546",
+    "creator":"0x1db6dec5731130d6b5d2e6789194e1391ca05754",
+    "creator_passphrase": "box123456",
+    "creator_keystore_path": "/opt/ether-data/keystore/UTC--2017-12-07T05-50-56.854752329Z--1db6dec5731130d6b5d2e6789194e1391ca05754",
+    "geth_api": "ws://localhost:8546",
     "check_block_before": 0,
-    "cursor_file_path":"/Users/wangzl/Work/src/github.com/boxproject/companion/cursor.txt",
-    "nonce_file_path": "/Users/wangzl/Work/src/github.com/boxproject/companion/nonce.txt",
+    "cursor_file_path":"/opt/box/companion/cursor.txt",
+    "nonce_file_path":"/opt/box/companion/nonce.txt",
     "scan_interval": 5,
-    "gas_limit":10000000,
     "gas_price":2,
     "wallet_gas": 291654,
     "factory_gas": 513617
@@ -18,10 +17,9 @@
     "ser_companion":"companion",
     "companion_name":"comp-001"
   },
-  "level_db_path":"/Users/wangzl/leveldb2c",
-  "sink_address":"0x6A70807545EC6307d5bFFceE2CDd8BdD8AB80fa9",
-  "client_cert":"/Users/wangzl/ssl/client.pem",
-  "client_key":"/Users/wangzl/ssl/client.key",
-  "grpc_ser_host":"127.0.0.1:50502",
-  "grpc_ser_port":":50502"
+  "level_db_path":"/opt/box/companion/leveldb",
+  "sink_address":"0x78202ee297826b2d3798db4300340d69893746f5",
+  "client_cert":"/opt/box/companion/certs/client.pem",
+  "client_key":"/opt/box/companion/certs/client.key",
+  "grpc_ser_host":"127.0.0.1:50502"
 }
