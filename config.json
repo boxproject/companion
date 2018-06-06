@@ -8,6 +8,7 @@
     "cursor_file_path":"/opt/box/companion/cursor.txt",
     "nonce_file_path":"/opt/box/companion/nonce.txt",
     "scan_interval": 5,
+    "gas_limit":4700000,
     "gas_price":2,
     "wallet_gas": 291654,
     "factory_gas": 513617

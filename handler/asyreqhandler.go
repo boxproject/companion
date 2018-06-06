@@ -247,7 +247,7 @@ func (this *PriAsyEthHandler) createTransactor(filePath, passphrase string) (*bi
 	if transactor, err := bind.NewTransactor(keyFile, passphrase); err != nil {
 		return nil, err
 	} else {
-		//transactor.GasLimit = uint64(this.ethCfg.GasLimit)
+		transactor.GasLimit = uint64(this.ethCfg.GasLimit)
 		//transactor.GasPrice = big.NewInt(this.ethCfg.GasPrice)
 		return transactor, nil
 	}
