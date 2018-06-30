@@ -148,7 +148,7 @@ func withdrawApplyHandler(logW *EthEventLogWatcher, log *types.Log) error {
 		}
 		logger.Debug("withdrawAplyHandler......db....")
 		lastConfirmed := common.BytesToAddress(dataBytes[128:160])
-		logger.Debug("lastConfirmed:%v,Creator:%v",lastConfirmed.Hex(),common.HexToAddress(logW.appCfg.Creator).Hex())
+		logger.Debug("lastConfirmed:%v,Creator:%v,txHash:%v",lastConfirmed.Hex(),common.HexToAddress(logW.appCfg.Creator).Hex(),log.TxHash.Hex())
 		if util.AddressEquals(lastConfirmed, common.HexToAddress(logW.appCfg.Creator)) { //最终确认人
 			grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_WITHDRAW_LOG, Hash: hash, WdHash: wdHash, Amount: amount, Fee: fee, To: to, Category: category}
 			if grpcStreamJson, err := json.Marshal(grpcStream); err != nil {
