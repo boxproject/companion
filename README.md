@@ -1,5 +1,7 @@
 # Companion
 
+[![Build Status](https://travis-ci.org/boxproject/companion.svg?branch=master)](https://travis-ci.org/boxproject/companion) [![Hex.pm](https://img.shields.io/hexpm/l/plug.svg)](https://www.apache.org/licenses/LICENSE-2.0) [![language](https://img.shields.io/badge/golang-%5E1.10-blue.svg)]()
+
 本程序主要用途有三个：
 
 1. 与代理服务通信
