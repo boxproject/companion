@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	logger "github.com/alecthomas/log4go"
+	"errors"
 )
 
 var digNoRWMutex sync.RWMutex
@@ -32,6 +33,11 @@ func ReadBlockNumberFromFile(filePath string) (*big.Int, error) {
 	}
 
 	data = bytes.TrimSpace(data)
-	delta, _ := big.NewInt(0).SetString(string(data), 10)
+	delta, isOk := big.NewInt(0).SetString(string(data), 10)
+	if isOk == false {
+		return big.NewInt(0), errors.New("data is nil")
+	}
+
+
 	return delta, nil
 }

@@ -29,7 +29,7 @@ func (h *HashController) retErrJSON(hash, errNo string) {
 //Hash处理
 func (h *HashController) Hash() {
 	hashStr := h.GetString("hash")
-	if !common.HasHexPrefix(hashStr) {
+	if !common.IsHexAddress(hashStr) {
 		h.retErrJSON(hashStr, comm.Err_UNENABLE_PREFIX)
 		return
 	}

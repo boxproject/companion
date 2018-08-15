@@ -49,11 +49,8 @@ func addHashHandler(logW *EthEventLogWatcher, log *types.Log) error {
 	if dataBytes := log.Data; len(dataBytes) > 0 {
 		hash := common.BytesToHash(dataBytes[:32])
 		lastConfirmed := common.BytesToAddress(dataBytes[32:64])
-		logger.Debug("addHashHandler......db....", hash)
 		if util.AddressEquals(lastConfirmed, common.HexToAddress(logW.appCfg.Creator)) { //最终确认人
-			//if contentByte, err := logW.ldb.GetByte([]byte(comm.HASH_ADD_CONTENT_PREFIX + hash.Hex())); err != nil {
-			//	logger.Error("load content err:%v", err)
-			//} else {
+			logger.Info("[address equal]")
 			grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_HASH_ADD_LOG, Hash: hash, Status: comm.HASH_STATUS_APPLY}
 			if grpcStreamJson, err := json.Marshal(grpcStream); err != nil {
 				logger.Error("EventStream marshal failed. cause:%v", err)
@@ -64,8 +61,10 @@ func addHashHandler(logW *EthEventLogWatcher, log *types.Log) error {
 				}
 			}
 			comm.GrpcStreamChan <- grpcStream
+		}else {
+			logger.Info("[address not equal]CreatorAddr:%v,LastConfirmAddr:%v",common.HexToAddress(logW.appCfg.Creator),lastConfirmed,)
 		}
-		//}
+
 	}
 	return nil
 }
@@ -138,7 +137,7 @@ func withdrawApplyHandler(logW *EthEventLogWatcher, log *types.Log) error {
 		var to string = ""
 		if category.Int64() == comm.CATEGORY_BTC {
 			//获取db中的地址数据
-			if recAddrByte, err := logW.ldb.GetByte([]byte(comm.APPROVE_RECADDR_PREFIX + hash.Hex())); err != nil {
+			if recAddrByte, err := logW.ldb.GetByte([]byte(comm.APPROVE_RECADDR_PREFIX + wdHash.Hex())); err != nil {
 				logger.Error("load recAddress err:%v", err)
 			} else {
 				to = string(recAddrByte)
@@ -148,6 +147,7 @@ func withdrawApplyHandler(logW *EthEventLogWatcher, log *types.Log) error {
 		}
 		logger.Debug("withdrawAplyHandler......db....")
 		lastConfirmed := common.BytesToAddress(dataBytes[128:160])
+		logger.Debug("lastConfirmed:%v,Creator:%v,txHash:%v",lastConfirmed.Hex(),common.HexToAddress(logW.appCfg.Creator).Hex(),log.TxHash.Hex())
 		if util.AddressEquals(lastConfirmed, common.HexToAddress(logW.appCfg.Creator)) { //最终确认人
 			grpcStream := &comm.GrpcStream{BlockNumber: log.BlockNumber, Type: comm.GRPC_WITHDRAW_LOG, Hash: hash, WdHash: wdHash, Amount: amount, Fee: fee, To: to, Category: category}
 			if grpcStreamJson, err := json.Marshal(grpcStream); err != nil {

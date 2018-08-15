@@ -9,14 +9,15 @@ import (
 	"github.com/boxproject/companion/comm"
 	"github.com/boxproject/companion/config"
 	"github.com/boxproject/companion/db"
+	"github.com/boxproject/companion/util"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"strings"
-	"github.com/boxproject/companion/util"
 	//"time"
+	"time"
 )
 
 type EthEventLogWatcher struct {
@@ -45,9 +46,9 @@ func NewEthEventLogWatcher(c *rpc.Client, ethCfg *config.EthCfg, blkFile string,
 func (logW *EthEventLogWatcher) Initial(events map[common.Hash]EventHandler) error {
 	logW.eventHandlerMap = events
 	// 读取当前日志记录下的区块号
-	logger.Debug("Block file: %s", logW.blkFile)
+	logger.Debug("Block file:[%v]", logW.blkFile)
 
-	cursorBlkNumber, err := ReadBlockNumberFromFile(logW.blkFile)
+	lastCursorBlkNumber, err := ReadBlockNumberFromFile(logW.blkFile)
 	if err != nil {
 		logger.Error("Read current blkNumber from file failed, cause: %v", err)
 		return err
@@ -59,57 +60,60 @@ func (logW *EthEventLogWatcher) Initial(events map[common.Hash]EventHandler) err
 		logger.Error("Get blkNumber from geth node failed. cause: %v", err)
 		return err
 	}
-
 	maxBlkNumber := blk.Number()
-
-	// 获取向前推N个区块的big.Int值
-	logW.checkBefore = big.NewInt(logW.appCfg.CheckBlockBefore)
-	logger.Debug("before:: max blkNumber: %s, cursor blkNumber: %s", maxBlkNumber.String(), cursorBlkNumber.String())
-
-	// -------|-------------------|
-	//    current                max
-	//  max - current >= checkBefore(30) 检查向前推的区块
-	diff := new(big.Int).Sub(maxBlkNumber, cursorBlkNumber)
-	for diff.Cmp(logW.checkBefore) != -1 {
-		if err = logW.checkLogs(cursorBlkNumber); err != nil {
-			return err
-		}
-
-		cursorBlkNumber = new(big.Int).Add(cursorBlkNumber, big.NewInt(1))
-		diff = new(big.Int).Sub(maxBlkNumber, cursorBlkNumber)
-	}
-	// 记录下当前的 blocknumber 供恢复用
-	//-----
-	logger.Info("logW.blkFile---------", logW.blkFile)
-
-	WriteCheckpointBlockNumberToFile(logW.blkFile, new(big.Int).Sub(cursorBlkNumber, big.NewInt(1)))
 
 	//nonce值初始化
 	nonce, err := logW.client.NonceAt(context.Background(), common.HexToAddress(logW.appCfg.Creator), maxBlkNumber)
 	if err != nil { //设置初始值nonce值
-		logger.Error("get nonce err: %s", err)
+		logger.Error("get nonce err: %v", err)
 	}
 	util.WriteNumberToFile(logW.appCfg.NonceFilePath, big.NewInt(int64(nonce)))
+	logger.Info("Nonce file:[%v], current nonce value:%v", logW.appCfg.NonceFilePath, nonce)
 
-	logger.Debug("after:: cursor blkNumber: %s", cursorBlkNumber.String())
+	// 获取向前推N个区块的big.Int值
+	logW.checkBefore = big.NewInt(logW.appCfg.CheckBlockBefore)
+	logger.Info("[BEGIN] rescan block ...")
+	logger.Info("Last scan block height: %v", lastCursorBlkNumber.String())
+	logger.Info("Current max block height: %v", maxBlkNumber.String())
+	// -------|-------------------|
+	//    current                max
+	//  max - current >= checkBefore(30) 检查向前推的区块
+	cursorBlkNumber := new(big.Int).Add(lastCursorBlkNumber, logW.checkBefore)
+	for maxBlkNumber.Cmp(new(big.Int).Add(cursorBlkNumber, big.NewInt(1))) >= 0 {
+		if err := logW.checkLogs(new(big.Int).Add(cursorBlkNumber, big.NewInt(1))); err != nil {
+			continue
+		}
+		//add 1 to next
+		cursorBlkNumber.Add(cursorBlkNumber, big.NewInt(1))
+	}
+	logger.Info("current scan block height: %v", new(big.Int).Sub(cursorBlkNumber, logW.checkBefore))
+	logger.Info("[END] rescan block ...")
+
 	return nil
 }
 
 func (logW *EthEventLogWatcher) Listen() {
+
 	ch := make(chan *types.Header)
 	sid, err := logW.client.SubscribeNewHead(context.Background(), ch)
+	if err == nil {
+		err = logW.recv(sid, ch)
+		defer sid.Unsubscribe()
+	}
+
+	//retry connect
 	if err != nil {
-		logger.Error("Sub to the block failed. cause: %v\n", err)
-		return
+		logger.Error("[ETH CONNECT ERROR]: %v", err)
+		d := util.DefaultBackoff.Duration(util.RetryCount)
+		if d > 0 {
+			time.Sleep(d)
+			logger.Info("[RETRY ETH CONNECT][%v] sleep:%v", util.RetryCount, d)
+			util.RetryCount++
+			go logW.Listen()
+			return
+		}
 	}
-
-	defer sid.Unsubscribe()
-
-	if err = logW.recv(sid, ch); err != nil {
-		logger.Error("Resubscribe to the geth. Receive header failed. cause: %v\n", err)
-		// reconnect
-		go logW.Listen()
-	}
+	logger.Debug("watcher listener stopped.")
 }
 
 func (logW *EthEventLogWatcher) Stop() {
@@ -118,7 +122,9 @@ func (logW *EthEventLogWatcher) Stop() {
 }
 
 func (logW *EthEventLogWatcher) recv(sid ethereum.Subscription, ch <-chan *types.Header) error {
+	logger.Debug("EthHandler recv...")
 	var err error
+	var lastScanHeight = big.NewInt(-1)
 	for {
 		select {
 		case <-logW.quitSignal:
@@ -130,46 +136,49 @@ func (logW *EthEventLogWatcher) recv(sid ethereum.Subscription, ch <-chan *types
 				return err
 			}
 		case head := <-ch:
+			if util.RetryCount != 0 {
+				//发现掉线,重新扫描
+				logW.Initial(PriEventMap)
+				util.RetryCount = 0
+				continue
+			}
 			if head.Number == nil {
 				continue
 			}
-
-			if err = logW.checkLogs(head.Number); err != nil {
-				return err
+			if lastScanHeight.Cmp(head.Number) != 0 {
+				if err = logW.checkLogs(head.Number); err != nil {
+					return err
+				}
+				lastScanHeight = head.Number
+			}else {
+				logger.Debug("[BLOCK] Get Same Block: %v",head.Number)
 			}
 		}
 	}
 }
 
 func (logW *EthEventLogWatcher) checkLogs(blkNumber *big.Int) error {
-	checkPoint, err := ReadBlockNumberFromFile(logW.blkFile) //文件中记录的点
-	if err != nil {
-		logger.Error("read block number err: %s", err)
-		return err
-	}
+	checkPoint := new(big.Int).Sub(blkNumber, logW.checkBefore)
 
-	if checkPoint.Cmp(blkNumber) > 0 { // 文件中记录点有误
-		checkPoint = blkNumber
-	} else if checkPoint.Cmp(big.NewInt(0)) <= 0 {
-		checkPoint = new(big.Int).Sub(blkNumber, logW.checkBefore)
-	} else {
-		checkPoint = checkPoint.Add(checkPoint, big.NewInt(1))
-	}
-
-	logger.Debug("[HEADER] FromBlock : %s, blkNumber: %s", checkPoint.String(), blkNumber.String())
+	logger.Debug("[BLOCK] GetBlock: %v, CheckBlock: %v", blkNumber, checkPoint)
 
 	//logger.Debug("[HEADER] blkNumber: %s， blkNumber checkpoint: %s", blkNumber.String(), checkPoint.String())
 	if logs, err := logW.client.FilterLogs(
 		context.Background(),
 		ethereum.FilterQuery{
 			FromBlock: checkPoint,
-			ToBlock:   blkNumber,
+			ToBlock:   checkPoint,
 		}); err != nil {
-		logger.Debug("FilterLogs :%s", err)
+		logger.Error("FilterLogs :%s", err)
 		return err
 	} else {
 		if len(logs) != 0 {
 			for _, log := range logs {
+				if log.Topics == nil || len(log.Topics) == 0 {
+					logger.Info("enventLog topics nil")
+					continue
+				}
+
 				handler, ok := logW.eventHandlerMap[log.Topics[0]]
 				if !ok {
 					logger.Info("false No ==> %s", log.Topics[0].Hex())
@@ -178,12 +187,11 @@ func (logW *EthEventLogWatcher) checkLogs(blkNumber *big.Int) error {
 				logger.Info("true No ==> %s", log.Topics[0].Hex())
 				if err = handler(logW, &log); err != nil {
 					logger.Error("log handler err: %s", err)
-					WriteCheckpointBlockNumberToFile(logW.blkFile, big.NewInt(int64(log.BlockNumber)))
 					return err
 				}
 			}
 		}
-		WriteCheckpointBlockNumberToFile(logW.blkFile, blkNumber)
+		WriteCheckpointBlockNumberToFile(logW.blkFile, checkPoint)
 	}
 
 	return nil

@@ -171,6 +171,8 @@ type Operate struct {
 	ContractAddr string
 	CoinCategory int64 //币种分类
 	CoinUsed     bool  //币种使用
+	Sign         string //签名
+	PassSign     string //密码签名
 }
 
 type TokenInfo struct {
